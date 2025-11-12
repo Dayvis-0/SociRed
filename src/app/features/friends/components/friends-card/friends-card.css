@@ -1,0 +1,72 @@
+.friend-card {
+    border: 1px solid #e4e6eb;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.friend-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.friend-card-avatar {
+    width: 100%;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: white;
+    font-weight: bold;
+}
+
+.friend-card-info {
+    padding: 1rem;
+}
+
+.friend-card-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.friend-card-mutual {
+    color: #65676b;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.friend-card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.friend-card-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.friend-card-btn.primary {
+    background: #e4e6eb;
+    color: #050505;
+}
+
+.friend-card-btn.primary:hover {
+    background: #d8dadf;
+}
+
+.friend-card-btn.secondary {
+    background: #e7f3ff;
+    color: #1877f2;
+}
+
+.friend-card-btn.secondary:hover {
+    background: #d8e9f7;
+}

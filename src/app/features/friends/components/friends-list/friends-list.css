@@ -1,0 +1,60 @@
+.friends-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.friends-main {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.friends-main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.friends-main-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.friends-count {
+    color: #65676b;
+    font-size: 0.9rem;
+}
+
+.friends-search {
+    background: #f0f2f5;
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    width: 250px;
+}
+
+.friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .friends-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .friends-main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .friends-search {
+        width: 100%;
+    }
+}

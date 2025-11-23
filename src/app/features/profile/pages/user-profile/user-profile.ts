@@ -150,13 +150,6 @@ export class UserProfile {
 
   photoEmojis: string[] = ['🏔️', '🌅', '🎨', '📸', '🌸', '🌊', '🖼️', '🌆', '🎭', '🎪', '🎡', '🎢'];
 
-  videos: Video[] = [
-    { emoji: '🎬', title: 'Mi proyecto web favorito', views: '1.2k vistas', time: 'Hace 3 días' },
-    { emoji: '📹', title: 'Tutorial de CSS Grid', views: '856 vistas', time: 'Hace 1 semana' },
-    { emoji: '🎥', title: 'Viaje a las montañas', views: '2.3k vistas', time: 'Hace 2 semanas' },
-    { emoji: '🎞️', title: 'Aprendiendo React', views: '1.8k vistas', time: 'Hace 3 semanas' }
-  ];
-
   onTabChange(tabId: string): void {
     this.activeTab = tabId;
   }

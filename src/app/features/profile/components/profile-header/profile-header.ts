@@ -40,7 +40,6 @@ export class ProfileHeader {
     { id: 'acerca', icon: 'ℹ️', label: 'Acerca de' },
     { id: 'amigos', icon: '👥', label: 'Amigos' },
     { id: 'fotos', icon: '📷', label: 'Fotos' },
-    { id: 'videos', icon: '🎥', label: 'Videos' }
   ];
 
   onTabClick(tabId: string): void {

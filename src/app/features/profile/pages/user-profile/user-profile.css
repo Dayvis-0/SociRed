@@ -558,105 +558,6 @@
     opacity: 0.9;
 }
 
-/* --- PESTAÑA: VIDEOS --- */
-.videos-section {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.videos-header {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.videos-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #050505;
-    margin: 0;
-}
-
-.add-video-btn {
-    background: #1877f2;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.add-video-btn:hover {
-    background: #166fe5;
-}
-
-.videos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
-}
-
-.video-item {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.video-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.video-thumbnail {
-    aspect-ratio: 16/9;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 64px;
-    position: relative;
-}
-
-.video-thumbnail::after {
-    content: '▶️';
-    position: absolute;
-    font-size: 32px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.video-info {
-    padding: 12px;
-}
-
-.video-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #050505;
-    margin-bottom: 4px;
-}
-
-.video-stats {
-    font-size: 13px;
-    color: #65676b;
-}
-
 /* --- MODALES --- */
 .modal-overlay {
     position: fixed;
@@ -1122,10 +1023,6 @@
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
     
-    .videos-grid {
-        grid-template-columns: 1fr;
-    }
-
     .profile-container {
         flex-direction: column;
         align-items: center;

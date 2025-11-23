@@ -155,27 +155,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Pestaña: Videos -->
-      <div class="tab-content" [class.active]="activeTab === 'videos'">
-        <div class="videos-section">
-          <div class="videos-header">
-            <h3 class="videos-title">Videos</h3>
-            <button class="add-video-btn">➕ Agregar video</button>
-          </div>
-
-          <div class="videos-grid">
-            <div class="video-item" *ngFor="let video of videos">
-              <div class="video-thumbnail">{{ video.emoji }}</div>
-              <div class="video-info">
-                <div class="video-title">{{ video.title }}</div>
-                <div class="video-stats">{{ video.views }} • {{ video.time }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </main>
 </div>

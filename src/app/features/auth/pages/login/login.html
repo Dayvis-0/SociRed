@@ -1,10 +1,8 @@
-<!-- src/app/features/auth/pages/login/login.html -->
 <div class="login-container">
   <div class="login-content">
-
     <!-- LEFT SIDE -->
-    <div class="login-left" aria-hidden="true">
-      <div class="logo">🌐</div>
+    <div class="login-left">
+      <div class="logo">🌍</div>
       <p class="tagline">
         SociAmigos te ayuda a comunicarte y compartir con las personas que forman parte de tu vida.
       </p>
@@ -12,55 +10,57 @@
 
     <!-- RIGHT SIDE -->
     <div class="login-right">
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" novalidate>
-
-        <h2 class="visually-hidden">Inicia sesión</h2>
-
-        <!-- EMAIL -->
-        <input
-          id="email"
-          type="email"
+      <form class="login-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Email Input -->
+        <input 
+          type="email" 
           class="input-field"
-          placeholder="Correo electrónico o número de teléfono"
           formControlName="email"
-          autocomplete="email"
-          required
-        />
-        <div class="error" *ngIf="f['email'].touched && f['email'].invalid">
-          <small *ngIf="f['email'].errors?.['required']">El correo es obligatorio.</small>
-          <small *ngIf="f['email'].errors?.['email']">Introduce un correo válido.</small>
+          placeholder="Correo electrónico o número de teléfono"
+          [class.error]="email?.invalid && email?.touched"
+        >
+        <div class="error-message" *ngIf="email?.invalid && email?.touched">
+          <span *ngIf="email?.errors?.['required']">El correo es obligatorio</span>
+          <span *ngIf="email?.errors?.['email']">Ingresa un correo válido</span>
         </div>
 
-        <!-- PASSWORD -->
-        <input
-          id="password"
-          type="password"
+        <!-- Password Input -->
+        <input 
+          type="password" 
           class="input-field"
-          placeholder="Contraseña"
           formControlName="password"
-          autocomplete="current-password"
-          required
-        />
-        <div class="error" *ngIf="f['password'].touched && f['password'].invalid">
-          <small *ngIf="f['password'].errors?.['required']">La contraseña es obligatoria.</small>
-          <small *ngIf="f['password'].errors?.['minlength']">
-            Mínimo {{ f['password'].errors?.['minlength'].requiredLength }} caracteres.
-          </small>
+          placeholder="Contraseña"
+          [class.error]="password?.invalid && password?.touched"
+        >
+        <div class="error-message" *ngIf="password?.invalid && password?.touched">
+          <span *ngIf="password?.errors?.['required']">La contraseña es obligatoria</span>
+          <span *ngIf="password?.errors?.['minlength']">La contraseña debe tener al menos 6 caracteres</span>
         </div>
 
-        <button type="submit" class="login-btn" [disabled]="loginForm.invalid || submitting">
-          {{ submitting ? 'Iniciando...' : 'Iniciar sesión' }}
+        <!-- Login Button -->
+        <button 
+          type="submit" 
+          class="login-btn"
+          [disabled]="loginForm.invalid"
+        >
+          Iniciar sesión
         </button>
 
+        <!-- Forgot Password -->
         <div class="forgot-password">
-          <button type="button" class="link-btn" (click)="forgotPassword()">¿Olvidaste tu contraseña?</button>
+          <a href="javascript:void(0)" (click)="onForgotPassword()">¿Olvidaste tu contraseña?</a>
         </div>
 
         <div class="divider"></div>
 
-        <!-- GOOGLE LOGIN -->
-        <button type="button" class="google-login-btn" (click)="loginWithGoogle()">
-          <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+        <!-- Google Login Button -->
+        <button 
+          type="button" 
+          class="google-login-btn"
+          (click)="onGoogleLogin()"
+        >
+          <svg class="google-icon" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -71,11 +71,27 @@
 
         <div class="divider"></div>
 
+        <!-- Create Account Button -->
         <div class="create-account">
-          <button type="button" class="create-btn" (click)="goToRegister()">Crear cuenta nueva</button>
+          <button 
+            type="button" 
+            class="create-btn"
+            (click)="onCreateAccount()"
+          >
+            Crear cuenta nueva
+          </button>
         </div>
-
       </form>
     </div>
   </div>
+</div>
+
+<!-- FOOTER -->
+<div class="sidebar-footer">
+  <a href="javascript:void(0)" class="footer-link">Políticas</a>
+  <span class="footer-separator">·</span>
+  <a href="javascript:void(0)" class="footer-link">Cookies</a>
+  <span class="footer-separator">·</span>
+  <a href="javascript:void(0)" class="footer-link">Derechos de autor</a>
+  <div class="footer-copyright">© 2025 Red Social</div>
 </div>

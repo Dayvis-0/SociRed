@@ -1,0 +1,273 @@
+/* CONTENEDOR PRINCIPAL */
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  width: 100%;
+  min-height: calc(100vh - 120px);
+}
+
+.register-box {
+  background: var(--surface-color);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  max-width: 420px;
+  width: 100%;
+}
+
+/* TÍTULOS */
+.register-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 4px;
+}
+
+.register-subtitle {
+  margin-bottom: 20px;
+  color: var(--secondary-text-color);
+  font-size: 17px;
+}
+
+/* FORMULARIO */
+.register-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* CAMPOS DE INPUT */
+.input-field {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s;
+  background: var(--surface-color);
+  color: var(--text-color);
+}
+
+.input-field:focus {
+  border-color: var(--primary-action-color);
+}
+
+.input-field::placeholder {
+  color: var(--secondary-text-color);
+}
+
+.input-field.error {
+  border-color: #fa3e3e;
+  margin-bottom: 4px;
+}
+
+.error-message {
+  color: #fa3e3e;
+  font-size: 13px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+/* CAMPOS DE NOMBRE */
+.name-fields {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.name-field-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.name-field-wrapper .input-field {
+  margin-bottom: 0;
+}
+
+.name-field-wrapper .error-message {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* FECHA DE NACIMIENTO */
+.label-title {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--secondary-text-color);
+  font-weight: 500;
+}
+
+.birthday-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.birthday-field-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.birthday-field-wrapper .input-field {
+  margin-bottom: 0;
+}
+
+.birthday-field-wrapper .error-message {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* GÉNERO */
+.gender-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.gender-option {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gender-option:hover {
+  background: var(--hover-bg);
+}
+
+.gender-option.selected {
+  border-color: var(--primary-action-color);
+  background: rgba(24, 119, 242, 0.1);
+}
+
+.gender-option input[type="radio"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+/* BOTÓN REGISTRAR */
+.register-btn {
+  width: 100%;
+  padding: 14px 16px;
+  background: #42b72a;
+  color: var(--surface-color);
+  border: none;
+  border-radius: 6px;
+  font-size: 19px;
+  font-weight: 700;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.register-btn:hover:not(:disabled) {
+  background: #36a420;
+}
+
+.register-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* LINK YA TIENES CUENTA */
+.already-account {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 15px;
+  color: var(--text-color);
+}
+
+.already-account a {
+  color: var(--primary-action-color);
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.already-account a:hover {
+  text-decoration: underline;
+}
+
+/* FOOTER */
+.sidebar-footer {
+  background: var(--surface-color);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 20px auto;
+  max-width: 1000px;
+  font-size: 13px;
+  color: var(--secondary-text-color);
+  text-align: center;
+}
+
+.footer-link {
+  color: var(--secondary-text-color);
+  text-decoration: none;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.footer-link:hover {
+  color: var(--primary-action-color);
+  text-decoration: underline;
+}
+
+.footer-separator {
+  margin: 0 6px;
+}
+
+.footer-copyright {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 480px) {
+  .register-container {
+    padding: 40px 10px;
+  }
+
+  .register-box {
+    padding: 20px;
+  }
+
+  .register-title {
+    font-size: 28px;
+  }
+
+  .register-subtitle {
+    font-size: 15px;
+  }
+
+  .birthday-group,
+  .gender-group {
+    flex-direction: column;
+  }
+
+  .input-field {
+    font-size: 15px;
+    padding: 12px 14px;
+  }
+
+  .register-btn {
+    font-size: 17px;
+  }
+
+  .gender-option {
+    font-size: 14px;
+  }
+}

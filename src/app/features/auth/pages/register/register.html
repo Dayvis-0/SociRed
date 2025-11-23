@@ -1,1 +1,185 @@
-<p>register works!</p>
+<div class="register-container">
+  <div class="register-box">
+    
+    <h2 class="register-title">Crea una cuenta</h2>
+    <p class="register-subtitle">Es rápido y fácil.</p>
+
+    <form class="register-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      
+      <!-- NOMBRE Y APELLIDO -->
+      <div class="name-fields">
+        <div class="name-field-wrapper">
+          <input 
+            type="text" 
+            class="input-field"
+            formControlName="firstName"
+            placeholder="Nombre"
+            [class.error]="firstName?.invalid && firstName?.touched"
+          >
+          <div class="error-message" *ngIf="firstName?.invalid && firstName?.touched">
+            <span *ngIf="firstName?.errors?.['required']">Requerido</span>
+            <span *ngIf="firstName?.errors?.['minlength']">Mínimo 2 caracteres</span>
+          </div>
+        </div>
+
+        <div class="name-field-wrapper">
+          <input 
+            type="text" 
+            class="input-field"
+            formControlName="lastName"
+            placeholder="Apellido"
+            [class.error]="lastName?.invalid && lastName?.touched"
+          >
+          <div class="error-message" *ngIf="lastName?.invalid && lastName?.touched">
+            <span *ngIf="lastName?.errors?.['required']">Requerido</span>
+            <span *ngIf="lastName?.errors?.['minlength']">Mínimo 2 caracteres</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FECHA DE NACIMIENTO -->
+      <label class="label-title">Fecha de nacimiento</label>
+      <div class="birthday-group">
+        <div class="birthday-field-wrapper">
+          <select 
+            class="input-field"
+            formControlName="day"
+            [class.error]="day?.invalid && day?.touched"
+          >
+            <option value="" disabled selected>Día</option>
+            <option *ngFor="let d of days" [value]="d">{{ d }}</option>
+          </select>
+          <div class="error-message" *ngIf="day?.invalid && day?.touched">
+            <span>Requerido</span>
+          </div>
+        </div>
+
+        <div class="birthday-field-wrapper">
+          <select 
+            class="input-field"
+            formControlName="month"
+            [class.error]="month?.invalid && month?.touched"
+          >
+            <option value="" disabled selected>Mes</option>
+            <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+          </select>
+          <div class="error-message" *ngIf="month?.invalid && month?.touched">
+            <span>Requerido</span>
+          </div>
+        </div>
+
+        <div class="birthday-field-wrapper">
+          <select 
+            class="input-field"
+            formControlName="year"
+            [class.error]="year?.invalid && year?.touched"
+          >
+            <option value="" disabled selected>Año</option>
+            <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+          </select>
+          <div class="error-message" *ngIf="year?.invalid && year?.touched">
+            <span>Requerido</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GÉNERO -->
+      <label class="label-title">Género</label>
+      <div class="gender-group">
+        <label 
+          class="gender-option"
+          [class.selected]="gender?.value === 'female'"
+        >
+          Mujer
+          <input 
+            type="radio" 
+            name="gender" 
+            value="female"
+            formControlName="gender"
+          >
+        </label>
+        
+        <label 
+          class="gender-option"
+          [class.selected]="gender?.value === 'male'"
+        >
+          Hombre
+          <input 
+            type="radio" 
+            name="gender" 
+            value="male"
+            formControlName="gender"
+          >
+        </label>
+        
+        <label 
+          class="gender-option"
+          [class.selected]="gender?.value === 'custom'"
+        >
+          Personalizado
+          <input 
+            type="radio" 
+            name="gender" 
+            value="custom"
+            formControlName="gender"
+          >
+        </label>
+      </div>
+      <div class="error-message" *ngIf="gender?.invalid && gender?.touched">
+        <span>Debes seleccionar un género</span>
+      </div>
+
+      <!-- EMAIL -->
+      <input 
+        type="email" 
+        class="input-field"
+        formControlName="email"
+        placeholder="Número de celular o correo electrónico"
+        [class.error]="email?.invalid && email?.touched"
+      >
+      <div class="error-message" *ngIf="email?.invalid && email?.touched">
+        <span *ngIf="email?.errors?.['required']">El correo es obligatorio</span>
+        <span *ngIf="email?.errors?.['email']">Ingresa un correo válido</span>
+      </div>
+
+      <!-- CONTRASEÑA -->
+      <input 
+        type="password" 
+        class="input-field"
+        formControlName="password"
+        placeholder="Contraseña nueva"
+        [class.error]="password?.invalid && password?.touched"
+      >
+      <div class="error-message" *ngIf="password?.invalid && password?.touched">
+        <span *ngIf="password?.errors?.['required']">La contraseña es obligatoria</span>
+        <span *ngIf="password?.errors?.['minlength']">Mínimo 6 caracteres</span>
+      </div>
+
+      <!-- BOTÓN REGISTRAR -->
+      <button 
+        type="submit" 
+        class="register-btn"
+        [disabled]="registerForm.invalid"
+      >
+        Registrarte
+      </button>
+    </form>
+
+    <!-- LINK INICIAR SESIÓN -->
+    <p class="already-account">
+      ¿Ya tienes una cuenta? 
+      <a href="javascript:void(0)" (click)="onLogin()">Iniciar sesión</a>
+    </p>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="sidebar-footer">
+  <a href="javascript:void(0)" class="footer-link">Políticas</a>
+  <span class="footer-separator">·</span>
+  <a href="javascript:void(0)" class="footer-link">Cookies</a>
+  <span class="footer-separator">·</span>
+  <a href="javascript:void(0)" class="footer-link">Derechos de autor</a>
+  <div class="footer-copyright">© 2025 Red Social</div>
+</div>

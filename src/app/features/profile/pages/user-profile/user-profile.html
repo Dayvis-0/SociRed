@@ -1,1 +1,283 @@
-<p>user-profile works!</p>
+<app-navbar></app-navbar>
+<div class="profile-container">
+  <main class="profile-main">
+    <!-- Header del perfil con tabs -->
+    <app-profile-header
+      [userName]="userName"
+      [userInitials]="userInitials"
+      [friendsCount]="friendsCount"
+      [isOwnProfile]="true"
+      (tabChange)="onTabChange($event)"
+      (editProfile)="openEditProfileModal()"
+      (editAvatar)="onEditAvatar()"
+      (editCover)="onEditCover()">
+    </app-profile-header>
+
+    <!-- Contenido de las pestañas -->
+    <div class="profile-content">
+      
+      <!-- Pestaña: Publicaciones -->
+      <div class="tab-content" [class.active]="activeTab === 'publicaciones'">
+        <div class="suggestions-card-horizontal">
+          <div class="suggestions-title">Sugerencias para ti</div>
+          
+          <div 
+            *ngFor="let suggestion of suggestions"
+            class="suggestion-item">
+            <div class="suggestion-avatar" [style.background]="suggestion.gradient">
+              {{ suggestion.initials }}
+            </div>
+            <div class="suggestion-info">
+              <div class="suggestion-name">{{ suggestion.name }}</div>
+              <div class="suggestion-mutual">{{ suggestion.mutualFriends }} amigos en común</div>
+            </div>
+            <button 
+              class="sidebar-follow-btn"
+              [class.following]="suggestion.following"
+              (click)="toggleFollow(suggestion)">
+              {{ suggestion.following ? 'Siguiendo' : 'Seguir' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-posts">
+          <div class="create-post">
+            <div class="create-post-input">
+              <div class="create-post-avatar">{{ userInitials }}</div>
+              <input 
+                type="text" 
+                class="create-post-field" 
+                [placeholder]="'¿Qué estás pensando, ' + userName.split(' ')[0] + '?'"
+                (click)="openCreatePostModal()"
+                readonly>
+            </div>
+          </div>
+
+          <article class="post" *ngFor="let post of posts">
+            <div class="post-header">
+              <div class="post-avatar">{{ post.initials }}</div>
+              <div class="post-info">
+                <div class="post-author">{{ post.author }}</div>
+                <div class="post-time">{{ post.time }}</div>
+              </div>
+              <div class="post-menu" (click)="openEditPostModal(post.id)">⋯</div>
+            </div>
+            <div class="post-content">{{ post.content }}</div>
+            <div class="post-image" *ngIf="post.hasImage">{{ post.imageEmoji }}</div>
+            <div class="post-stats">
+              <span>❤️ {{ post.likes }} Me gusta</span>
+              <span>{{ post.comments }} Comentarios</span>
+            </div>
+            <div class="post-actions">
+              <button 
+                class="post-action"
+                [class.liked]="post.liked"
+                (click)="toggleLike(post)">
+                <span>{{ post.liked ? '❤️' : '🤍' }}</span>
+                <span>Me gusta</span>
+              </button>
+              <button class="post-action">
+                <span>💬</span>
+                <span>Comentar</span>
+              </button>
+              <button class="post-action" (click)="openEditPostModal(post.id)">
+                <span>✏️</span>
+                <span>Editar</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Pestaña: Acerca de -->
+      <div class="tab-content" [class.active]="activeTab === 'acerca'">
+        <div class="about-section">
+          <div class="about-card">
+            <h3 class="about-title">📋 Información general</h3>
+            <div class="about-item" *ngFor="let info of aboutInfo">
+              <span class="about-icon">{{ info.icon }}</span>
+              <div class="about-text">
+                <strong>{{ info.title }}</strong>
+                <p>{{ info.description }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="about-card">
+            <h3 class="about-title">💭 Acerca de mí</h3>
+            <p class="about-bio">
+              Apasionada por la tecnología y el desarrollo web. Me encanta aprender nuevas tecnologías 
+              y compartir conocimiento con la comunidad. Siempre en busca de nuevos desafíos y 
+              oportunidades de crecimiento profesional.
+            </p>
+          </div>
+
+          <div class="about-card">
+            <h3 class="about-title">❤️ Intereses</h3>
+            <div class="interests-grid">
+              <span class="interest-tag" *ngFor="let interest of interests">{{ interest }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestaña: Amigos -->
+      <div class="tab-content" [class.active]="activeTab === 'amigos'">
+        <div class="friends-section">
+          <div class="friends-header-info">
+            <h3 class="friends-title">Amigos</h3>
+            <p class="friends-count">{{ friendsCount }} amigos</p>
+          </div>
+
+          <div class="friends-grid">
+            <div class="friend-card" *ngFor="let friend of friends">
+              <div class="friend-card-avatar" [style.background]="friend.gradient">
+                {{ friend.initials }}
+              </div>
+              <div class="friend-card-name">{{ friend.name }}</div>
+              <div class="friend-card-mutual">{{ friend.mutualFriends }} amigos en común</div>
+              <button class="friend-card-btn">Ver perfil</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestaña: Fotos -->
+      <div class="tab-content" [class.active]="activeTab === 'fotos'">
+        <div class="photos-section">
+          <div class="photos-header">
+            <h3 class="photos-title">Fotos</h3>
+            <button class="add-photos-btn">➕ Agregar fotos</button>
+          </div>
+
+          <div class="photos-grid">
+            <div class="photo-item" *ngFor="let emoji of photoEmojis">{{ emoji }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestaña: Videos -->
+      <div class="tab-content" [class.active]="activeTab === 'videos'">
+        <div class="videos-section">
+          <div class="videos-header">
+            <h3 class="videos-title">Videos</h3>
+            <button class="add-video-btn">➕ Agregar video</button>
+          </div>
+
+          <div class="videos-grid">
+            <div class="video-item" *ngFor="let video of videos">
+              <div class="video-thumbnail">{{ video.emoji }}</div>
+              <div class="video-info">
+                <div class="video-title">{{ video.title }}</div>
+                <div class="video-stats">{{ video.views }} • {{ video.time }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal Editar Perfil -->
+<div *ngIf="showEditProfileModal" class="modal-overlay" (click)="closeEditProfileModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Editar perfil</h2>
+      <button (click)="closeEditProfileModal()" class="close-modal-btn">&times;</button>
+    </div>
+    
+    <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+      <div class="edit-profile-section">
+        <label class="edit-label">Foto de perfil</label>
+        <div class="edit-avatar-preview">
+          <div class="profile-avatar-large">{{ userInitials }}</div>
+          <button class="change-photo-btn">Cambiar foto</button>
+        </div>
+      </div>
+      
+      <div class="edit-profile-section">
+        <label class="edit-label">Nombre</label>
+        <input type="text" class="edit-input" [value]="userName" placeholder="Tu nombre">
+      </div>
+      
+      <div class="edit-profile-section">
+        <label class="edit-label">Biografía</label>
+        <textarea class="edit-textarea" placeholder="Cuéntanos sobre ti..." rows="3">Amante de la tecnología y el aprendizaje continuo 💻✨</textarea>
+      </div>
+      
+      <div class="edit-profile-section">
+        <label class="edit-label">Ciudad</label>
+        <input type="text" class="edit-input" value="Lima, Perú" placeholder="Tu ciudad">
+      </div>
+      
+      <div class="edit-profile-section">
+        <label class="edit-label">Sitio web</label>
+        <input type="text" class="edit-input" placeholder="https://tusitio.com">
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button (click)="closeEditProfileModal()" class="cancel-btn">Cancelar</button>
+      <button (click)="saveProfile()" class="publish-btn">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Post -->
+<div *ngIf="showEditPostModal" class="modal-overlay" (click)="closeEditPostModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Editar publicación</h2>
+      <button (click)="closeEditPostModal()" class="close-modal-btn">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="user-info-modal">
+        <div class="profile-avatar-large" style="width: 40px; height: 40px; font-size: 16px;">
+          {{ userInitials }}
+        </div>
+        <span class="modal-user-name">{{ userName }}</span>
+      </div>
+      
+      <textarea class="post-textarea" placeholder="¿Qué estás pensando?"></textarea>
+    </div>
+    
+    <div class="modal-footer">
+      <button (click)="closeEditPostModal()" class="cancel-btn">Cancelar</button>
+      <button (click)="savePost()" class="publish-btn">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear Publicación -->
+<div *ngIf="showCreatePostModal" class="modal-overlay" (click)="closeCreatePostModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Crear publicación</h2>
+      <button (click)="closeCreatePostModal()" class="close-modal-btn">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="user-info-modal">
+        <div class="profile-avatar-large" style="width: 40px; height: 40px; font-size: 16px;">
+          {{ userInitials }}
+        </div>
+        <span class="modal-user-name">{{ userName }}</span>
+      </div>
+      
+      <textarea class="post-textarea" placeholder="¿Qué está pasando?"></textarea>
+      
+      <div class="post-options">
+        <button class="option-btn" title="Agregar foto">📷 Foto/Video</button>
+        <button class="option-btn" title="Sentimiento">😊 Sentimiento</button>
+        <button class="option-btn" title="Ubicación">📍 Ubicación</button>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button (click)="publishPost()" class="publish-btn">Publicar</button>
+    </div>
+  </div>
+</div>

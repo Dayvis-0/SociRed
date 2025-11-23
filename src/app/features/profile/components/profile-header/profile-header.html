@@ -4,19 +4,56 @@
 
 <div class="profile-header-section">
   <div class="profile-header-content">
-    <div class="profile-avatar-large">MG</div>
+    <div class="profile-avatar-container">
+      <div class="profile-avatar-large">{{ userInitials }}</div>
+      <button 
+        *ngIf="isOwnProfile" 
+        class="edit-avatar-btn" 
+        (click)="onEditAvatar()"
+        title="Editar foto de perfil">
+        📷
+      </button>
+    </div>
+    
     <div class="profile-header-info">
-      <h1 class="profile-name-large">María González</h1>
-      <div class="profile-friends-count">248 amigos</div>
+      <h1 class="profile-name-large">{{ userName }}</h1>
+      <div class="profile-friends-count">{{ friendsCount }} amigos</div>
       <div class="profile-friends-preview">
-        <div class="friend-preview-avatar" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">AP</div>
-        <div class="friend-preview-avatar" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">DL</div>
-        <div class="friend-preview-avatar" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">SF</div>
-        <div class="friend-preview-avatar" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">RM</div>
-        <div class="friend-preview-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">PT</div>
-        <div class="friend-preview-avatar" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">MV</div>
+        <div 
+          *ngFor="let friend of friendsPreviews"
+          class="friend-preview-avatar" 
+          [style.background]="friend.gradient">
+          {{ friend.initials }}
+        </div>
       </div>
     </div>
+    
+    <button 
+      *ngIf="isOwnProfile"
+      class="edit-profile-btn" 
+      (click)="onEditProfile()">
+      ✏️ Editar perfil
+    </button>
   </div>
+  
+  <button 
+    *ngIf="isOwnProfile"
+    class="edit-cover-btn" 
+    (click)="onEditCover()"
+    title="Editar foto de portada">
+    📷 Editar portada
+  </button>
+  
   <div class="profile-header-divider"></div>
+  
+  <div class="profile-tabs">
+    <div 
+      *ngFor="let tab of tabs"
+      class="profile-tab"
+      [class.active]="activeTab === tab.id"
+      (click)="onTabClick(tab.id)">
+      <span>{{ tab.icon }}</span>
+      <span>{{ tab.label }}</span>
+    </div>
+  </div>
 </div>

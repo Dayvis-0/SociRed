@@ -98,14 +98,18 @@ export class FeedComponent {
     this.editingPostId = null;
     this.createPostModal.open();
   }
-
-  onPublishPost(content: string): void {
+  
+  onPublishPost(data: {content: string, imageUrl?: string}): void {
     if (this.editingPostId) {
       // Editar post existente
       const postIndex = this.posts.findIndex(p => p.id === this.editingPostId);
       if (postIndex !== -1) {
-        this.posts[postIndex].content = content;
+        this.posts[postIndex].content = data.content;
         this.posts[postIndex].time = 'Editado justo ahora';
+        if (data.imageUrl) {
+          this.posts[postIndex].hasImage = true;
+          this.posts[postIndex].imageEmoji = '🖼️';
+        }
         console.log('Publicación editada:', this.posts[postIndex]);
       }
       this.editingPostId = null;
@@ -116,8 +120,9 @@ export class FeedComponent {
         author: 'María González',
         initials: 'MG',
         time: 'Justo ahora',
-        content: content,
-        hasImage: false,
+        content: data.content,
+        hasImage: !!data.imageUrl,
+        imageEmoji: data.imageUrl ? '🖼️' : undefined,
         likes: 0,
         comments: 0,
         liked: false,

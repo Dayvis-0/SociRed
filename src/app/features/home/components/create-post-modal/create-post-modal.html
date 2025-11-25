@@ -4,30 +4,43 @@
       <h2>{{ modalTitle }}</h2>
       <button class="close-modal-btn" (click)="close()">&times;</button>
     </div>
-    
+        
     <div class="modal-body">
       <div class="user-info-modal">
         <div class="modal-user-avatar">MG</div>
         <span class="modal-user-name">María González</span>
       </div>
-      
+            
       <textarea 
-        class="post-textarea" 
+        class="post-textarea"
         placeholder="¿Qué está pasando?"
         [(ngModel)]="postContent"
+        (input)="onContentChange()"
         #textarea
       ></textarea>
-      
+
+      <!-- Preview de imagen -->
+      <div class="image-preview" *ngIf="selectedImageUrl">
+        <img [src]="selectedImageUrl" alt="Preview">
+        <button class="remove-image-btn" (click)="removeImage()">&times;</button>
+      </div>
+            
+      <!-- Opciones de Publicación -->
       <div class="post-options">
-        <button class="option-btn" title="Agregar foto" (click)="onPhotoClick()">
+        <input 
+          type="file" 
+          #fileInput 
+          accept="image/*" 
+          style="display: none"
+          (change)="onFileSelected($event)"
+        >
+        
+        <button class="option-btn" title="Agregar foto" (click)="fileInput.click()">
           📷 Foto/Video
-        </button>
-        <button class="option-btn" title="Ubicación" (click)="onLocationClick()">
-          📍 Ubicación
         </button>
       </div>
     </div>
-    
+        
     <div class="modal-footer">
       <button class="publish-btn" [disabled]="isPublishDisabled" (click)="onPublish()">
         {{ publishButtonText }}

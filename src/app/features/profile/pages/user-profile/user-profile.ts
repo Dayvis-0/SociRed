@@ -123,7 +123,6 @@ export class UserProfile {
   aboutInfo: AboutInfo[] = [
     { icon: '🎓', title: 'Estudios', description: 'Ingeniería de Sistemas en Universidad Nacional' },
     { icon: '💼', title: 'Trabajo', description: 'Desarrolladora Web en TechCorp' },
-    { icon: '📍', title: 'Ubicación', description: 'Lima, Perú' },
     { icon: '🌐', title: 'Sitio web', description: 'www.mariagonzalez.dev' }
   ];
 

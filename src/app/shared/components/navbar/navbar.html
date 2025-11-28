@@ -9,7 +9,7 @@
         <input 
           type="text" 
           class="search-input"
-          placeholder="Buscar en Red Social Básica"
+          placeholder="Buscar en SociAmigos"
           [(ngModel)]="searchQuery"
         >
       </div>
@@ -39,15 +39,57 @@
       <span class="notification-icon">🔔</span>
       <span class="notification-badge">3</span>
     </div>
+    
     <div class="user-menu-container">
-      <div class="user-avatar-nav" (click)="toggleUserMenu()">MG</div>
+      <!-- Avatar con iniciales del usuario -->
+      <div 
+        class="user-avatar-nav" 
+        (click)="toggleUserMenu()"
+        [title]="currentUser?.displayName || 'Usuario'"
+      >
+        {{ userInitials }}
+      </div>
+      
+      <!-- Dropdown Menu -->
       <div class="user-dropdown-menu" [class.show]="userMenuOpen">
-        <a routerLink="/profile" class="user-menu-item" (click)="closeUserMenu()">
+        <!-- User Info Header -->
+        <div class="user-menu-header" *ngIf="currentUser">
+          <div class="user-menu-avatar">{{ userInitials }}</div>
+          <div class="user-menu-info">
+            <div class="user-menu-name">{{ currentUser.displayName }}</div>
+            <div class="user-menu-email">{{ currentUser.email }}</div>
+          </div>
+        </div>
+        
+        <div class="user-menu-divider"></div>
+        
+        <!-- Ver perfil -->
+        <a 
+          routerLink="/profile" 
+          class="user-menu-item" 
+        >
           <span>👤</span>
           <span>Ver perfil</span>
         </a>
+        
+        <!-- Configuración (opcional) -->
+        <a 
+          routerLink="/profile/edit" 
+          class="user-menu-item" 
+          (click)="closeUserMenu()"
+        >
+          <span>⚙️</span>
+          <span>Configuración</span>
+        </a>
+        
         <div class="user-menu-divider"></div>
-        <a href="javascript:void(0)" class="user-menu-item" (click)="logout()">
+        
+        <!-- Cerrar sesión -->
+        <a 
+          href="javascript:void(0)" 
+          class="user-menu-item logout-item" 
+          (click)="logout()"
+        >
           <span>🚪</span>
           <span>Cerrar sesión</span>
         </a>

@@ -1,15 +1,15 @@
 <aside class="sidebar-right">
   <div class="profile-card">
-    <div class="profile-avatar">MG</div>
-    <a routerLink="/profile" class="profile-name">María González</a>
-    <div class="profile-bio">Desarrolladora Web</div>
+    <div class="profile-avatar">{{ userInitials || '??' }}</div>
+    <a routerLink="/profile" class="profile-name">{{ userName || 'Usuario' }}</a>
+    <div class="profile-bio">{{ userBio || 'Sin biografía' }}</div>
     <div class="profile-stats">
       <div class="profile-stat">
-        <div class="profile-stat-value">248</div>
+        <div class="profile-stat-value">{{ friendsCount }}</div>
         <div class="profile-stat-label">Amigos</div>
       </div>
       <div class="profile-stat">
-        <div class="profile-stat-value">42</div>
+        <div class="profile-stat-value">{{ postsCount }}</div>
         <div class="profile-stat-label">Publicaciones</div>
       </div>
     </div>

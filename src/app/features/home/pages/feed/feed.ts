@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CreatePostModalComponent } from '../../components/create-post-modal/create-post-modal';
 import { CommentSectionComponent } from '../../components/comment-section/comment-section';
@@ -6,6 +6,9 @@ import { NavbarComponent } from '../../../../shared/components/navbar/navbar';
 import { SidebarLeftComponent } from '../../../../shared/components/sidebar-left/sidebar-left';
 import { SidebarRightComponent } from '../../../../shared/components/sidebar-right/sidebar-right';
 import { LikeButtonComponent } from '../../components/like-button/like-button';
+import { AuthService } from '../../../../core/services/auth.service';
+import { User } from '../../../../core/models/user.model';
+import { Subscription } from 'rxjs';
 
 interface Post {
   id: number;
@@ -36,8 +39,14 @@ interface Post {
   templateUrl: './feed.html',
   styleUrl: './feed.css'
 })
-export class FeedComponent {
+export class FeedComponent implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+  
   @ViewChild(CreatePostModalComponent) createPostModal!: CreatePostModalComponent;
+
+  currentUser: User | null = null;
+  currentUserInitials: string = '';
+  private userSubscription?: Subscription;
 
   posts: Post[] = [
     {
@@ -94,6 +103,34 @@ export class FeedComponent {
 
   private editingPostId: number | null = null;
 
+  ngOnInit(): void {
+    // Suscribirse al usuario actual
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        this.currentUserInitials = this.getInitials(user.displayName);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar suscripción
+    this.userSubscription?.unsubscribe();
+  }
+
+  /**
+   * Obtiene las iniciales del nombre del usuario
+   */
+  getInitials(displayName: string): string {
+    if (!displayName) return '??';
+    
+    const names = displayName.trim().split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return displayName.substring(0, 2).toUpperCase();
+  }
+
   openCreatePostModal(): void {
     this.editingPostId = null;
     this.createPostModal.open();
@@ -114,11 +151,11 @@ export class FeedComponent {
       }
       this.editingPostId = null;
     } else {
-      // Crear nuevo post
+      // Crear nuevo post con los datos del usuario autenticado
       const newPost: Post = {
         id: Date.now(),
-        author: 'María González',
-        initials: 'MG',
+        author: this.currentUser?.displayName || 'Usuario',
+        initials: this.currentUserInitials || '??',
         time: 'Justo ahora',
         content: data.content,
         hasImage: !!data.imageUrl,
@@ -143,5 +180,11 @@ export class FeedComponent {
     this.editingPostId = post.id;
     this.createPostModal.open(post.content);
     console.log('Editando post:', post.id);
+  }
+
+  get placeholderText(): string {
+    const name = this.currentUser?.displayName || '';
+    const firstName = name.split(' ')[0] || 'Usuario';
+    return `¿Qué estás pensando, ${firstName}?`;
   }
 }

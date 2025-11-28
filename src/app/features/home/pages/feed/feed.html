@@ -7,11 +7,11 @@
     <!-- CREATE POST -->
     <div class="create-post">
       <div class="create-post-input" (click)="openCreatePostModal()">
-        <div class="create-post-avatar">MG</div>
+        <div class="create-post-avatar">{{ currentUserInitials }}</div>
         <input 
           type="text" 
           class="create-post-field" 
-          placeholder="¿Qué estás pensando, María?" 
+          [placeholder]="placeholderText"
           readonly
         >
       </div>

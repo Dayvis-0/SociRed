@@ -1,6 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+import { User } from '../../../core/models/user.model';
+import { Subscription } from 'rxjs';
 
 interface Suggestion {
   initials: string;
@@ -17,7 +20,15 @@ interface Suggestion {
   templateUrl: './sidebar-left.html',
   styleUrl: './sidebar-left.css'
 })
-export class SidebarLeftComponent {
+export class SidebarLeftComponent implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+
+  currentUser: User | null = null;
+  userInitials: string = '';
+  userName: string = '';
+  
+  private userSubscription?: Subscription;
+
   suggestions: Suggestion[] = [
     {
       initials: 'RM',
@@ -41,6 +52,36 @@ export class SidebarLeftComponent {
       following: false
     }
   ];
+
+  ngOnInit(): void {
+    // Suscribirse al usuario actual de Firebase
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        this.userName = user.displayName;
+        this.userInitials = this.getInitials(user.displayName);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar suscripción
+    this.userSubscription?.unsubscribe();
+  }
+
+  /**
+   * Obtiene las iniciales del nombre del usuario
+   * Ejemplo: "Juan Pérez" -> "JP"
+   */
+  getInitials(displayName: string): string {
+    if (!displayName) return '??';
+    
+    const names = displayName.trim().split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return displayName.substring(0, 2).toUpperCase();
+  }
 
   toggleFollow(suggestion: Suggestion): void {
     suggestion.following = !suggestion.following;

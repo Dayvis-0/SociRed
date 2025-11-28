@@ -156,38 +156,6 @@
     transition: background 0.2s;
 }
 
-/* --- FOOTER --- */
-.sidebar-footer {
-    background: var(--surface-color);
-    border-radius: 8px;
-    padding: 12px;
-    margin: 20px auto;
-    max-width: 1000px;
-    font-size: 13px;
-    color: var(--secondary-text-color);
-    text-align: center;
-}
-
-.footer-link {
-    color: var(--secondary-text-color);
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-.footer-link:hover {
-    color: var(--primary-action-color);
-    text-decoration: underline;
-}
-
-.footer-separator {
-    margin: 0 6px;
-}
-
-.footer-copyright {
-    margin-top: 8px;
-    font-size: 12px;
-}
-
 .alert {
   padding: 12px 16px;
   border-radius: 8px;

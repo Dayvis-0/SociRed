@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AuthFooterComponent } from '../../../../shared/components/auth-footer/auth-footer';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, AuthFooterComponent, ReactiveFormsModule],
   templateUrl: './forgot-password.html',
   styleUrls: ['./forgot-password.css']
 })

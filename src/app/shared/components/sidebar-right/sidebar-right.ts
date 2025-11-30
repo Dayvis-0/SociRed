@@ -1,13 +1,18 @@
+// src/app/shared/components/sidebar-right/sidebar-right.ts
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { FriendService } from '../../../core/services/friend.service';
 import { User } from '../../../core/models/user.model';
+import { getRandomGradient } from '../../../core/models/suggestion.model';
 import { Subscription } from 'rxjs';
 
 interface OnlineUser {
+  userId: string;
   initials: string;
   name: string;
+  photoURL?: string;
   gradient: string;
 }
 
@@ -20,58 +25,98 @@ interface OnlineUser {
 })
 export class SidebarRight implements OnInit, OnDestroy {
   private authService = inject(AuthService);
+  private friendService = inject(FriendService);
 
   currentUser: User | null = null;
   userInitials: string = '';
   userName: string = '';
   userBio: string = '';
+  userPhotoURL: string = '';
   friendsCount: number = 0;
   postsCount: number = 0;
   
+  onlineUsers: OnlineUser[] = [];
+  loadingOnlineUsers: boolean = true;
+  
   private userSubscription?: Subscription;
-
-  onlineUsers: OnlineUser[] = [
-    {
-      initials: 'AP',
-      name: 'Ana Pérez',
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
-    },
-    {
-      initials: 'DL',
-      name: 'Diego López',
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-    },
-    {
-      initials: 'SF',
-      name: 'Sofía Fernández',
-      gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
-    }
-  ];
+  private friendsSubscription?: Subscription;
 
   ngOnInit(): void {
-    // Suscribirse al usuario actual de Firebase
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user) {
         this.userName = user.displayName;
         this.userInitials = this.getInitials(user.displayName);
         this.userBio = user.bio || 'Sin biografía';
-        // Valores temporales hasta que se implementen en el modelo User
-        this.friendsCount = 0;
-        this.postsCount = 0;
+        this.userPhotoURL = user.photoURL || '';
+        this.friendsCount = user.friendsCount || 0;
+        this.postsCount = user.postsCount || 0;
+        
+        this.loadOnlineUsers(user.userId);
       }
     });
   }
 
   ngOnDestroy(): void {
-    // Limpiar suscripción
     this.userSubscription?.unsubscribe();
+    this.friendsSubscription?.unsubscribe();
   }
 
-  /**
-   * Obtiene las iniciales del nombre del usuario
-   * Ejemplo: "Juan Pérez" -> "JP"
-   */
+  loadOnlineUsers(userId: string): void {
+    this.loadingOnlineUsers = true;
+
+    this.friendsSubscription = this.friendService.getFriends(userId).subscribe({
+      next: (friends) => {
+        if (friends.length > 0) {
+          const randomFriends = this.shuffleArray(friends).slice(0, 5);
+          
+          this.onlineUsers = randomFriends.map(friend => ({
+            userId: friend.userId,
+            initials: this.getInitials(friend.displayName),
+            name: friend.displayName,
+            photoURL: friend.photoURL,
+            gradient: getRandomGradient()
+          }));
+        } else {
+          this.loadSuggestedUsers(userId);
+        }
+        
+        this.loadingOnlineUsers = false;
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar usuarios online:', error);
+        this.loadSuggestedUsers(userId);
+        this.loadingOnlineUsers = false;
+      }
+    });
+  }
+
+  async loadSuggestedUsers(userId: string): Promise<void> {
+    try {
+      const suggestions = await this.friendService.generateSuggestions(userId, 5);
+      
+      this.onlineUsers = suggestions.map(suggestion => ({
+        userId: suggestion.suggestedUserId,
+        initials: suggestion.suggestedUserInitials,
+        name: suggestion.suggestedUserName,
+        photoURL: suggestion.suggestedUserPhotoURL,
+        gradient: getRandomGradient()
+      }));
+    } catch (error) {
+      console.error('❌ Error al cargar usuarios sugeridos:', error);
+      this.onlineUsers = [];
+    }
+  }
+
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
   getInitials(displayName: string): string {
     if (!displayName) return '??';
     

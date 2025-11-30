@@ -28,6 +28,8 @@
   height: 80px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,6 +37,12 @@
   font-weight: 700;
   font-size: 32px;
   margin: 0 auto 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-avatar span {
+  z-index: 1;
 }
 
 .profile-name {
@@ -45,6 +53,7 @@
   text-decoration: none;
   display: block;
   cursor: pointer;
+  transition: color 0.2s;
 }
 
 .profile-name:hover {
@@ -55,6 +64,10 @@
   font-size: 15px;
   color: var(--secondary-text-color);
   margin-bottom: 16px;
+  line-height: 1.4;
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-stats {
@@ -66,6 +79,12 @@
 
 .profile-stat {
   text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.profile-stat:hover {
+  transform: scale(1.05);
 }
 
 .profile-stat-value {
@@ -100,6 +119,18 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background: var(--light-bg);
+}
+
+.suggestion-item:last-child {
+  margin-bottom: 0;
 }
 
 .online-avatar-container {
@@ -110,12 +141,19 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--surface-color);
   font-weight: 600;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.suggestion-avatar span {
+  z-index: 1;
 }
 
 .online-indicator {
@@ -127,19 +165,111 @@
   background: var(--online-color);
   border: 2px solid var(--surface-color);
   border-radius: 50%;
+  animation: pulse-online 2s ease-in-out infinite;
+}
+
+@keyframes pulse-online {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
 }
 
 .suggestion-info {
   flex: 1;
+  min-width: 0;
 }
 
 .suggestion-name {
   font-weight: 600;
   font-size: 15px;
   color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .suggestion-mutual {
   font-size: 13px;
   color: var(--secondary-text-color);
+}
+
+/* --- LOADING STATE --- */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.mini-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #1877f2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+.loading-state p {
+  font-size: 14px;
+  color: var(--secondary-text-color);
+  margin: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- EMPTY STATE --- */
+.empty-online {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.empty-online p {
+  font-size: 32px;
+  margin: 0 0 8px 0;
+}
+
+.empty-online span {
+  font-size: 14px;
+  color: var(--secondary-text-color);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 1200px) {
+  .sidebar-right {
+    display: none;
+  }
+}
+
+/* Scrollbar personalizado */
+.sidebar-right::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-right::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-right::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.sidebar-right::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-text-color);
 }

@@ -1,6 +1,12 @@
 <aside class="sidebar-right">
+  <!-- PROFILE CARD -->
   <div class="profile-card">
-    <div class="profile-avatar">{{ userInitials || '??' }}</div>
+    <div 
+      class="profile-avatar"
+      [style.background-image]="userPhotoURL ? 'url(' + userPhotoURL + ')' : 'none'"
+    >
+      <span *ngIf="!userPhotoURL">{{ userInitials || '??' }}</span>
+    </div>
     <a routerLink="/profile" class="profile-name">{{ userName || 'Usuario' }}</a>
     <div class="profile-bio">{{ userBio || 'Sin biografía' }}</div>
     <div class="profile-stats">
@@ -15,23 +21,42 @@
     </div>
   </div>
 
+  <!-- ONLINE USERS CARD -->
   <div class="suggestions-card">
-    <div class="suggestions-title">Usuarios Conectados</div>
+    <div class="suggestions-title">
+      {{ onlineUsers.length > 0 ? 'Usuarios Conectados' : 'Cargando...' }}
+    </div>
     
-    <div *ngFor="let user of onlineUsers" class="suggestion-item">
-      <div class="online-avatar-container">
-        <div 
-          class="suggestion-avatar"
-          [style.background]="user.gradient"
-        >
-          {{ user.initials }}
+    <!-- Loading State -->
+    <div *ngIf="loadingOnlineUsers" class="loading-state">
+      <div class="mini-spinner"></div>
+      <p>Cargando usuarios...</p>
+    </div>
+
+    <!-- Online Users List -->
+    <div *ngIf="!loadingOnlineUsers && onlineUsers.length > 0">
+      <div *ngFor="let user of onlineUsers" class="suggestion-item">
+        <div class="online-avatar-container">
+          <div 
+            class="suggestion-avatar"
+            [style.background]="user.photoURL ? 'none' : user.gradient"
+            [style.background-image]="user.photoURL ? 'url(' + user.photoURL + ')' : 'none'"
+          >
+            <span *ngIf="!user.photoURL">{{ user.initials }}</span>
+          </div>
+          <span class="online-indicator"></span>
         </div>
-        <span class="online-indicator"></span>
+        <div class="suggestion-info">
+          <div class="suggestion-name">{{ user.name }}</div>
+          <div class="suggestion-mutual">Conectado ahora</div>
+        </div>
       </div>
-      <div class="suggestion-info">
-        <div class="suggestion-name">{{ user.name }}</div>
-        <div class="suggestion-mutual">Conectada ahora</div>
-      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loadingOnlineUsers && onlineUsers.length === 0" class="empty-online">
+      <p>👥</p>
+      <span>No hay usuarios conectados</span>
     </div>
   </div>
 </aside>

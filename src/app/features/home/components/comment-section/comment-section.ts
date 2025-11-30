@@ -1,16 +1,12 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface Comment {
-  id: number;
-  author: string;
-  text: string;
-  time: string;
-  likes: number;
-  liked: boolean;
-  replies?: Comment[];
-}
+import { CommentService } from '../../../../core/services/comment.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { CommentUI } from '../../../../core/models/comment.model';
+import { User } from '../../../../core/models/user.model';
+import { Subscription } from 'rxjs';
+import { Timestamp } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-comment-section',
@@ -19,90 +15,180 @@ interface Comment {
   templateUrl: './comment-section.html',
   styleUrl: './comment-section.css'
 })
-export class CommentSection {
-  @Input() postId!: number;
+export class CommentSection implements OnInit, OnDestroy {
+  private commentService = inject(CommentService);
+  private authService = inject(AuthService);
+
+  @Input() postId!: string;
   @Input() commentsCount: number = 0;
   
   showComments = false;
   newCommentText = '';
+  currentUser: User | null = null;
+  currentUserInitials: string = '??';
   
-  comments: Comment[] = [
-    {
-      id: 1,
-      author: 'Ana García',
-      text: '¡Qué hermosa foto! Me encanta 😍',
-      time: '2 h',
-      likes: 12,
-      liked: false,
-      replies: [
-        {
-          id: 11,
-          author: 'Carlos Ruiz',
-          text: 'Totalmente de acuerdo! 👍',
-          time: '1 h',
-          likes: 0,
-          liked: false
-        }
-      ]
-    },
-    {
-      id: 2,
-      author: 'Luis Martínez',
-      text: 'Increíble momento 📸',
-      time: '3 h',
-      likes: 5,
-      liked: false
-    }
-  ];
+  comments: CommentUI[] = [];
+  loading: boolean = false;
+  
+  private userSubscription?: Subscription;
+  private commentsSubscription?: Subscription;
 
+  ngOnInit(): void {
+    // Suscribirse al usuario actual
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        this.currentUserInitials = this.getInitials(user.displayName);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.userSubscription?.unsubscribe();
+    this.commentsSubscription?.unsubscribe();
+  }
+
+  /**
+   * Mostrar/ocultar comentarios y cargarlos desde Firebase
+   */
   toggleComments(): void {
     this.showComments = !this.showComments;
-  }
-
-  toggleLike(comment: Comment): void {
-    comment.liked = !comment.liked;
-    comment.likes += comment.liked ? 1 : -1;
-  }
-
-  addComment(): void {
-    if (this.newCommentText.trim()) {
-      const newComment: Comment = {
-        id: Date.now(),
-        author: 'Tú',
-        text: this.newCommentText.trim(),
-        time: 'Justo ahora',
-        likes: 0,
-        liked: false
-      };
-      
-      this.comments.push(newComment);
-      this.newCommentText = '';
-      this.showComments = true;
-      this.commentsCount++;
+    
+    if (this.showComments && this.comments.length === 0) {
+      this.loadComments();
     }
   }
 
-  onReply(comment: Comment): void {
-    console.log('Responder a:', comment.author);
-    alert(`Funcionalidad de responder a ${comment.author} en desarrollo`);
+  /**
+   * Cargar comentarios desde Firebase
+   */
+  loadComments(): void {
+    this.loading = true;
+    
+    this.commentsSubscription = this.commentService.getCommentsByPost(this.postId, 100).subscribe({
+      next: (comments) => {
+        this.comments = comments.map(comment => ({
+          ...comment,
+          timeAgo: this.getTimeAgo(comment.fecha),
+          isLikedByCurrentUser: this.currentUser ? 
+            comment.likedBy.includes(this.currentUser.userId) : false,
+          replies: []
+        }));
+        
+        this.loading = false;
+        console.log('✅ Comentarios cargados:', this.comments.length);
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar comentarios:', error);
+        this.loading = false;
+      }
+    });
   }
 
+  /**
+   * Dar/quitar like a un comentario
+   */
+  async toggleLike(comment: CommentUI): Promise<void> {
+    if (!this.currentUser) {
+      console.error('❌ No hay usuario autenticado');
+      return;
+    }
+
+    try {
+      await this.commentService.toggleLike(this.postId, comment.comentarioId, this.currentUser.userId);
+      
+      // Actualizar UI localmente
+      comment.isLikedByCurrentUser = !comment.isLikedByCurrentUser;
+      comment.likes += comment.isLikedByCurrentUser ? 1 : -1;
+      
+      if (comment.isLikedByCurrentUser) {
+        comment.likedBy.push(this.currentUser.userId);
+      } else {
+        comment.likedBy = comment.likedBy.filter(id => id !== this.currentUser!.userId);
+      }
+    } catch (error) {
+      console.error('❌ Error al dar/quitar like:', error);
+    }
+  }
+
+  /**
+   * Agregar un comentario
+   */
+  async addComment(): Promise<void> {
+    if (!this.currentUser) {
+      console.error('❌ No hay usuario autenticado');
+      return;
+    }
+
+    if (this.newCommentText.trim()) {
+      try {
+        await this.commentService.createComment(
+          this.postId,
+          this.currentUser.userId,
+          this.currentUser.displayName,
+          this.currentUser.photoURL,
+          this.newCommentText.trim()
+        );
+        
+        this.newCommentText = '';
+        this.commentsCount++;
+        
+        // Recargar comentarios
+        this.loadComments();
+        
+        console.log('✅ Comentario agregado');
+      } catch (error) {
+        console.error('❌ Error al agregar comentario:', error);
+      }
+    }
+  }
+
+  /**
+   * Responder a un comentario
+   */
+  onReply(comment: CommentUI): void {
+    console.log('Responder a:', comment.autorName);
+    this.newCommentText = `@${comment.autorName} `;
+    // TODO: Implementar respuestas como comentarios hijos
+  }
+
+  /**
+   * Obtener iniciales
+   */
+  getInitials(displayName: string): string {
+    if (!displayName) return '??';
+    
+    const names = displayName.trim().split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return displayName.substring(0, 2).toUpperCase();
+  }
+
+  /**
+   * Calcular tiempo transcurrido
+   */
+  getTimeAgo(timestamp: Timestamp): string {
+    const now = new Date();
+    const date = timestamp.toDate();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Justo ahora';
+    if (diffMins < 60) return `${diffMins} min`;
+    if (diffHours < 24) return `${diffHours} h`;
+    if (diffDays < 7) return `${diffDays} d`;
+    
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  }
+
+  // Funciones para botones adicionales
   onEmojiClick(): void {
     this.newCommentText += '😊';
   }
-
-  onAttachClick(): void {
-    alert('Función de adjuntar en desarrollo');
-  }
-
-  onGifClick(): void {
-    alert('Función de GIF en desarrollo');
-  }
-
-  onStickerClick(): void {
-    alert('Función de sticker en desarrollo');
-  }
-
+  
   onKeyPress(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();

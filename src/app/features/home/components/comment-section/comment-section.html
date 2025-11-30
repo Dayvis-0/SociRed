@@ -1,23 +1,38 @@
 <div class="comments-section">
   <!-- Botón para mostrar comentarios existentes -->
-  <button class="view-comments-btn" (click)="toggleComments()">
-    {{ showComments ? 'Ocultar comentarios' : 'Ver los ' + commentsCount + ' comentarios' }}
+  <button class="view-comments-btn" (click)="toggleComments()" *ngIf="commentsCount > 0">
+    {{ showComments ? 'Ocultar comentarios' : 'Ver los ' + commentsCount + ' comentario' + (commentsCount !== 1 ? 's' : '') }}
   </button>
   
-  <!-- Contenedor de comentarios -->
-  <div class="comments-container" [class.show]="showComments" *ngIf="showComments">
+  <!-- Loading -->
+  <div *ngIf="loading" class="comments-loading">
+    <span>Cargando comentarios...</span>
+  </div>
+  
+  <!-- Contenedor de comentarios con scroll -->
+  <div 
+    class="comments-container" 
+    [class.show]="showComments" 
+    [class.has-scroll]="comments.length > 3"
+    *ngIf="showComments && !loading"
+  >
     <!-- Comentarios -->
     <div *ngFor="let comment of comments" class="comment-item">
-      <div class="comment-avatar">{{ comment.author.substring(0, 2).toUpperCase() }}</div>
+      <div 
+        class="comment-avatar"
+        [style.background-image]="comment.autorPhotoURL ? 'url(' + comment.autorPhotoURL + ')' : 'none'"
+      >
+        <span *ngIf="!comment.autorPhotoURL">{{ getInitials(comment.autorName) }}</span>
+      </div>
       <div class="comment-content">
         <div class="comment-bubble">
-          <span class="comment-author">{{ comment.author }}</span>
-          <p class="comment-text">{{ comment.text }}</p>
+          <span class="comment-author">{{ comment.autorName }}</span>
+          <p class="comment-text">{{ comment.texto }}</p>
         </div>
         <div class="comment-actions">
           <button 
             class="comment-like-btn"
-            [class.liked]="comment.liked"
+            [class.liked]="comment.isLikedByCurrentUser"
             (click)="toggleLike(comment)"
           >
             Me gusta
@@ -25,7 +40,7 @@
           <button class="comment-reply-btn" (click)="onReply(comment)">
             Responder
           </button>
-          <span class="comment-time">{{ comment.time }}</span>
+          <span class="comment-time">{{ comment.timeAgo }}</span>
           <span *ngIf="comment.likes > 0" class="comment-likes">
             {{ comment.likes }} Me gusta
           </span>
@@ -34,35 +49,47 @@
         <!-- Respuestas al comentario -->
         <div *ngIf="comment.replies && comment.replies.length > 0" class="comment-replies">
           <div *ngFor="let reply of comment.replies" class="comment-item reply">
-            <div class="comment-avatar">{{ reply.author.substring(0, 2).toUpperCase() }}</div>
+            <div 
+              class="comment-avatar"
+              [style.background-image]="reply.autorPhotoURL ? 'url(' + reply.autorPhotoURL + ')' : 'none'"
+            >
+              <span *ngIf="!reply.autorPhotoURL">{{ getInitials(reply.autorName) }}</span>
+            </div>
             <div class="comment-content">
               <div class="comment-bubble">
-                <span class="comment-author">{{ reply.author }}</span>
-                <p class="comment-text">{{ reply.text }}</p>
+                <span class="comment-author">{{ reply.autorName }}</span>
+                <p class="comment-text">{{ reply.texto }}</p>
               </div>
               <div class="comment-actions">
                 <button 
                   class="comment-like-btn"
-                  [class.liked]="reply.liked"
+                  [class.liked]="reply.isLikedByCurrentUser"
                   (click)="toggleLike(reply)"
                 >
                   Me gusta
                 </button>
-                <button class="comment-reply-btn" (click)="onReply(reply)">
-                  Responder
-                </button>
-                <span class="comment-time">{{ reply.time }}</span>
+                <span class="comment-time">{{ reply.timeAgo }}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Empty state -->
+    <div *ngIf="comments.length === 0" class="comments-empty">
+      <p>No hay comentarios aún. ¡Sé el primero en comentar!</p>
+    </div>
   </div>
   
   <!-- Formulario para agregar comentario -->
   <div class="add-comment-form">
-    <div class="comment-avatar">TÚ</div>
+    <div 
+      class="comment-avatar"
+      [style.background-image]="(currentUser && currentUser.photoURL) ? 'url(' + currentUser.photoURL + ')' : 'none'"
+    >
+      <span *ngIf="!(currentUser && currentUser.photoURL)">{{ currentUserInitials }}</span>
+    </div>
     <div class="comment-input-wrapper">
       <input 
         type="text" 
@@ -73,9 +100,6 @@
       >
       <div class="comment-input-actions">
         <button class="emoji-btn" title="Emoji" (click)="onEmojiClick()">😊</button>
-        <button class="attach-btn" title="Adjuntar" (click)="onAttachClick()">📎</button>
-        <button class="gif-btn" title="GIF" (click)="onGifClick()">GIF</button>
-        <button class="sticker-btn" title="Sticker" (click)="onStickerClick()">🎨</button>
       </div>
     </div>
   </div>

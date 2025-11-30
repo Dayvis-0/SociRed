@@ -84,13 +84,14 @@
 
       <!-- COMMENT SECTION -->
       <app-comment-section 
+        [postId]="post.postId"
         [commentsCount]="post.commentsCount"
       ></app-comment-section>
     </article>
 
     <!-- EMPTY STATE -->
     <div *ngIf="!loading && posts.length === 0" class="empty-state">
-      <p>📭</p>
+      <p>🔭</p>
       <h3>No hay publicaciones aún</h3>
       <p>¡Sé el primero en compartir algo!</p>
     </div>

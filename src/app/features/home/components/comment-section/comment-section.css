@@ -23,16 +23,68 @@
   text-decoration: underline;
 }
 
+/* Loading state */
+.comments-loading {
+  padding: 12px;
+  text-align: center;
+  color: #65676b;
+  font-size: 14px;
+}
+
 /* Contenedor de Comentarios */
 .comments-container {
   margin-top: 12px;
+  position: relative;
+}
+
+/* CRÍTICO: Scroll cuando hay más de 7 comentarios */
+.comments-container.has-scroll {
+  max-height: 560px; /* 7 comentarios x 80px aprox cada uno */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+/* Scrollbar personalizado */
+.comments-container.has-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.comments-container.has-scroll::-webkit-scrollbar-track {
+  background: #f0f2f5;
+  border-radius: 4px;
+  margin: 4px 0;
+}
+
+.comments-container.has-scroll::-webkit-scrollbar-thumb {
+  background: #bcc0c4;
+  border-radius: 4px;
+}
+
+.comments-container.has-scroll::-webkit-scrollbar-thumb:hover {
+  background: #8a8d91;
+}
+
+/* Firefox scrollbar */
+.comments-container.has-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #bcc0c4 #f0f2f5;
+}
+
+/* Empty state */
+.comments-empty {
+  padding: 20px;
+  text-align: center;
+  color: #65676b;
+  font-size: 14px;
 }
 
 /* Item de Comentario */
 .comment-item {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  min-height: 60px;
 }
 
 .comment-item.reply {
@@ -44,7 +96,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,6 +104,8 @@
   font-weight: 600;
   font-size: 11px;
   flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
 }
 
 /* Contenido del Comentario */
@@ -82,6 +136,8 @@
   color: #050505;
   margin: 0;
   line-height: 1.3333;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Acciones del Comentario */
@@ -113,6 +169,7 @@
 
 .comment-like-btn.liked {
   color: #1877f2;
+  font-weight: 700;
 }
 
 .comment-time {
@@ -239,6 +296,10 @@
     width: 24px;
     height: 24px;
     font-size: 14px;
+  }
+
+  .comments-container.has-scroll {
+    max-height: 480px; /* Altura reducida en móviles */
   }
 }
 

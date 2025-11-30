@@ -1,5 +1,5 @@
 // src/app/core/services/auth.service.ts
-import { Injectable, inject, Injector, runInInjectionContext } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   Auth,
@@ -11,7 +11,7 @@ import {
   sendPasswordResetEmail,
   fetchSignInMethodsForEmail,
   updateProfile,
-  user,
+  authState,
   User as FirebaseUser
 } from '@angular/fire/auth';
 import { 
@@ -20,11 +20,12 @@ import {
   setDoc, 
   getDoc, 
   updateDoc,
-  serverTimestamp 
+  serverTimestamp,
+  Timestamp 
 } from '@angular/fire/firestore';
-import { Observable, from, of, BehaviorSubject } from 'rxjs';
-import { switchMap, map, catchError, tap } from 'rxjs/operators';
-import { User, RegisterData, LoginData } from '../models/user.model';
+import { Observable, from, of, BehaviorSubject, firstValueFrom } from 'rxjs';
+import { switchMap, map, catchError, tap, filter } from 'rxjs/operators';
+import { User, RegisterData, LoginData, CompleteProfileData } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',
@@ -33,22 +34,27 @@ export class AuthService {
   private auth = inject(Auth);
   private firestore = inject(Firestore);
   private router = inject(Router);
-  private injector = inject(Injector);
 
-  // Observable del usuario de Firebase Auth
-  private user$ = user(this.auth);
-  
   // BehaviorSubject para manejar el estado del usuario actual
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   // Estado de carga
-  private loadingSubject = new BehaviorSubject<boolean>(false);
+  private loadingSubject = new BehaviorSubject<boolean>(true); // Empieza en true
   public loading$ = this.loadingSubject.asObservable();
 
+  // Estado de inicialización
+  private initializedSubject = new BehaviorSubject<boolean>(false);
+  public initialized$ = this.initializedSubject.asObservable();
+
   constructor() {
-    // Escuchar cambios en la autenticación
-    this.user$.pipe(
+    this.initAuthStateListener();
+  }
+
+  // ==================== LISTENER DE AUTENTICACIÓN ====================
+  private initAuthStateListener(): void {
+    authState(this.auth).pipe(
+      tap(() => this.loadingSubject.next(true)),
       switchMap(firebaseUser => {
         if (firebaseUser) {
           return this.getUserData(firebaseUser.uid);
@@ -56,8 +62,20 @@ export class AuthService {
           return of(null);
         }
       })
-    ).subscribe(user => {
-      this.currentUserSubject.next(user);
+    ).subscribe({
+      next: (user) => {
+        this.currentUserSubject.next(user);
+        this.loadingSubject.next(false);
+        
+        if (!this.initializedSubject.value) {
+          this.initializedSubject.next(true);
+        }
+      },
+      error: (error) => {
+        console.error('Error en auth state:', error);
+        this.loadingSubject.next(false);
+        this.initializedSubject.next(true);
+      }
     });
   }
 
@@ -79,26 +97,34 @@ export class AuthService {
       // 2. Actualizar perfil en Authentication
       await updateProfile(firebaseUser, { displayName });
 
-      // 3. Crear documento de usuario en Firestore
-      const birthDate = new Date(data.year, data.month - 1, data.day);
+      // 3. Crear fecha de nacimiento
+      const birthDate = Timestamp.fromDate(
+        new Date(data.year, data.month - 1, data.day)
+      );
       
-      const userData: User = {
-        uid: firebaseUser.uid,
+      // 4. Crear documento de usuario en Firestore (estructura completa)
+      const userData: Omit<User, 'createdAt' | 'updatedAt'> = {
+        userId: firebaseUser.uid,
         email: data.email,
         displayName: displayName,
-        photoURL: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName),
+        photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`,
         bio: '',
+        friendsCount: 0,
+        postsCount: 0,
         birthDate: birthDate,
-        gender: data.gender,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        gender: data.gender
       };
 
       await this.createUserDocument(firebaseUser.uid, userData);
       
-      this.currentUserSubject.next(userData);
+      // 5. Obtener el usuario completo con timestamps
+      const completeUser = await firstValueFrom(this.getUserData(firebaseUser.uid));
       
-      // 4. Redirigir al feed
+      if (completeUser) {
+        this.currentUserSubject.next(completeUser);
+      }
+      
+      // 6. Redirigir al feed
       await this.router.navigate(['/feed']);
       
     } catch (error: any) {
@@ -120,13 +146,15 @@ export class AuthService {
         data.password
       );
 
-      const userData = await runInInjectionContext(this.injector, () => 
-        this.getUserData(userCredential.user.uid).toPromise()
+      const userData = await firstValueFrom(
+        this.getUserData(userCredential.user.uid)
       );
       
       if (userData) {
         this.currentUserSubject.next(userData);
         await this.router.navigate(['/feed']);
+      } else {
+        throw new Error('No se encontraron datos del usuario');
       }
 
     } catch (error: any) {
@@ -149,18 +177,20 @@ export class AuthService {
       const firebaseUser = userCredential.user;
 
       // Verificar si el usuario ya existe en Firestore
-      const userDoc = await runInInjectionContext(this.injector, () => 
-        getDoc(doc(this.firestore, 'users', firebaseUser.uid))
-      );
+      const userDocRef = doc(this.firestore, 'users', firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
         // Usuario nuevo - redirigir a completar perfil
         await this.router.navigate(['/auth/complete-profile']);
       } else {
         // Usuario existente - ir al feed
-        const userData = userDoc.data() as User;
-        this.currentUserSubject.next(userData);
-        await this.router.navigate(['/feed']);
+        const userData = await firstValueFrom(this.getUserData(firebaseUser.uid));
+        
+        if (userData) {
+          this.currentUserSubject.next(userData);
+          await this.router.navigate(['/feed']);
+        }
       }
 
     } catch (error: any) {
@@ -172,30 +202,48 @@ export class AuthService {
   }
 
   // ==================== COMPLETAR PERFIL (GOOGLE) ====================
-  async completeProfile(firstName: string, lastName: string): Promise<void> {
+  async completeProfile(data: CompleteProfileData): Promise<void> {
     const firebaseUser = this.auth.currentUser;
     
     if (!firebaseUser) {
-      throw new Error('No user logged in');
+      throw new Error('No hay usuario autenticado');
     }
 
-    const displayName = `${firstName} ${lastName}`;
+    try {
+      this.loadingSubject.next(true);
 
-    // Crear documento de usuario en Firestore
-    const userData: User = {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email || '',
-      displayName: displayName,
-      photoURL: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName),
-      bio: '',
-      birthDate: new Date(), // Fecha por defecto
-      gender: 'custom',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      // Crear documento de usuario en Firestore con estructura completa
+      const userData: Omit<User, 'createdAt' | 'updatedAt'> = {
+        userId: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        displayName: firebaseUser.displayName || 'Usuario',
+        photoURL: data.photoURL || firebaseUser.photoURL || 
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'Usuario')}&background=random`,
+        bio: data.bio || '',
+        coverPhotoURL: data.coverPhotoURL,
+        friendsCount: 0,
+        postsCount: 0,
+        website: data.website,
+        location: data.location,
+        occupation: data.occupation
+      };
 
-    await this.createUserDocument(firebaseUser.uid, userData);
-    this.currentUserSubject.next(userData);
+      await this.createUserDocument(firebaseUser.uid, userData);
+      
+      const completeUser = await firstValueFrom(this.getUserData(firebaseUser.uid));
+      
+      if (completeUser) {
+        this.currentUserSubject.next(completeUser);
+      }
+
+      await this.router.navigate(['/feed']);
+
+    } catch (error: any) {
+      console.error('Error al completar perfil:', error);
+      throw error;
+    } finally {
+      this.loadingSubject.next(false);
+    }
   }
 
   // ==================== LOGOUT ====================
@@ -219,7 +267,6 @@ export class AuthService {
       const methods = await fetchSignInMethodsForEmail(this.auth, email);
       
       if (methods.length === 0) {
-        // El usuario no existe
         throw { code: 'auth/user-not-found' };
       }
       
@@ -233,19 +280,32 @@ export class AuthService {
   }
 
   // ==================== OBTENER DATOS DEL USUARIO ====================
-  private getUserData(uid: string): Observable<User | null> {
-    const userDocRef = doc(this.firestore, 'users', uid);
+  private getUserData(userId: string): Observable<User | null> {
+    const userDocRef = doc(this.firestore, 'users', userId);
     
-    return from(runInInjectionContext(this.injector, () => getDoc(userDocRef))).pipe(
+    return from(getDoc(userDocRef)).pipe(
       map(docSnap => {
         if (docSnap.exists()) {
-          const data = docSnap.data() as User;
+          const data = docSnap.data();
+          
+          // Convertir Timestamps y asegurar estructura completa
           return {
-            ...data,
-            birthDate: data.birthDate instanceof Date ? data.birthDate : (data.birthDate as any).toDate(),
-            createdAt: data.createdAt instanceof Date ? data.createdAt : (data.createdAt as any).toDate(),
-            updatedAt: data.updatedAt instanceof Date ? data.updatedAt : (data.updatedAt as any).toDate()
-          };
+            userId: data['userId'] || userId,
+            email: data['email'] || '',
+            displayName: data['displayName'] || '',
+            photoURL: data['photoURL'],
+            bio: data['bio'],
+            coverPhotoURL: data['coverPhotoURL'],
+            friendsCount: data['friendsCount'] || 0,
+            postsCount: data['postsCount'] || 0,
+            website: data['website'],
+            location: data['location'],
+            birthDate: data['birthDate'] ? this.convertToTimestamp(data['birthDate']) : undefined,
+            occupation: data['occupation'],
+            gender: data['gender'],
+            createdAt: this.convertToTimestamp(data['createdAt']),
+            updatedAt: this.convertToTimestamp(data['updatedAt'])
+          } as User;
         }
         return null;
       }),
@@ -257,35 +317,39 @@ export class AuthService {
   }
 
   // ==================== CREAR DOCUMENTO DE USUARIO ====================
-  private async createUserDocument(uid: string, userData: User): Promise<void> {
-    const userDocRef = doc(this.firestore, 'users', uid);
-    await runInInjectionContext(this.injector, () =>
-      setDoc(userDocRef, {
-        ...userData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      })
-    );
+  private async createUserDocument(
+    userId: string, 
+    userData: Omit<User, 'createdAt' | 'updatedAt'>
+  ): Promise<void> {
+    const userDocRef = doc(this.firestore, 'users', userId);
+    
+    await setDoc(userDocRef, {
+      ...userData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
   }
 
   // ==================== ACTUALIZAR PERFIL ====================
-  async updateUserProfile(uid: string, updates: Partial<User>): Promise<void> {
+  async updateUserProfile(userId: string, updates: Partial<User>): Promise<void> {
     try {
-      const userDocRef = doc(this.firestore, 'users', uid);
-      await runInInjectionContext(this.injector, () =>
-        updateDoc(userDocRef, {
-          ...updates,
-          updatedAt: serverTimestamp()
-        })
-      );
+      const userDocRef = doc(this.firestore, 'users', userId);
+      
+      // Remover campos que no se deben actualizar
+      const { createdAt, userId: _, ...updateData } = updates as any;
+      
+      await updateDoc(userDocRef, {
+        ...updateData,
+        updatedAt: serverTimestamp()
+      });
 
-      // Actualizar el usuario actual
-      const updatedUser = await runInInjectionContext(this.injector, () => 
-        this.getUserData(uid).toPromise()
-      );
+      // Actualizar el usuario actual en el BehaviorSubject
+      const updatedUser = await firstValueFrom(this.getUserData(userId));
+      
       if (updatedUser) {
         this.currentUserSubject.next(updatedUser);
       }
+      
     } catch (error) {
       console.error('Error al actualizar perfil:', error);
       throw error;
@@ -300,6 +364,45 @@ export class AuthService {
   // ==================== OBTENER USUARIO ACTUAL ====================
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
+  }
+
+  // ==================== OBTENER UID ACTUAL ====================
+  getCurrentUserId(): string | null {
+    return this.auth.currentUser?.uid || null;
+  }
+
+  // ==================== ESPERAR INICIALIZACIÓN ====================
+  async waitForInitialization(): Promise<void> {
+    if (this.initializedSubject.value) {
+      return;
+    }
+
+    await firstValueFrom(
+      this.initialized$.pipe(
+        filter(initialized => initialized === true)
+      )
+    );
+  }
+
+  // ==================== HELPER: CONVERTIR A TIMESTAMP ====================
+  private convertToTimestamp(value: any): Timestamp {
+    if (!value) {
+      return Timestamp.now();
+    }
+    
+    if (value instanceof Timestamp) {
+      return value;
+    }
+    
+    if (value.toDate && typeof value.toDate === 'function') {
+      return Timestamp.fromDate(value.toDate());
+    }
+    
+    if (value instanceof Date) {
+      return Timestamp.fromDate(value);
+    }
+    
+    return Timestamp.now();
   }
 
   // ==================== MANEJO DE ERRORES ====================
@@ -317,7 +420,7 @@ export class AuthService {
         errorMessage = 'Operación no permitida';
         break;
       case 'auth/weak-password':
-        errorMessage = 'La contraseña es muy débil';
+        errorMessage = 'La contraseña debe tener al menos 6 caracteres';
         break;
       case 'auth/user-disabled':
         errorMessage = 'Este usuario ha sido deshabilitado';
@@ -333,6 +436,12 @@ export class AuthService {
         break;
       case 'auth/popup-closed-by-user':
         errorMessage = 'Ventana de autenticación cerrada';
+        break;
+      case 'auth/network-request-failed':
+        errorMessage = 'Error de conexión. Verifica tu internet';
+        break;
+      case 'auth/too-many-requests':
+        errorMessage = 'Demasiados intentos. Intenta más tarde';
         break;
       default:
         errorMessage = error.message || 'Error desconocido';

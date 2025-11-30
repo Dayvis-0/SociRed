@@ -1,6 +1,9 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../../core/services/auth.service';
+import { User } from '../../../../core/models/user.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-create-post-modal',
@@ -9,7 +12,9 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './create-post-modal.html',
   styleUrl: './create-post-modal.css'
 })
-export class CreatePostModalComponent {
+export class CreatePostModalComponent implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+  
   @Output() closeModal = new EventEmitter<void>();
   @Output() publishPost = new EventEmitter<{content: string, imageUrl?: string}>();
   
@@ -18,6 +23,42 @@ export class CreatePostModalComponent {
   isEditMode = false;
   originalContent = '';
   selectedImageUrl: string | null = null;
+
+  // Datos del usuario desde Firebase
+  currentUser: User | null = null;
+  userInitials: string = '';
+  userName: string = '';
+  
+  private userSubscription?: Subscription;
+
+  ngOnInit(): void {
+    // Suscribirse al usuario actual de Firebase
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        this.userName = user.displayName;
+        this.userInitials = this.getInitials(user.displayName);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar suscripción
+    this.userSubscription?.unsubscribe();
+  }
+
+  /**
+   * Obtiene las iniciales del nombre del usuario
+   */
+  getInitials(displayName: string): string {
+    if (!displayName) return '??';
+    
+    const names = displayName.trim().split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return displayName.substring(0, 2).toUpperCase();
+  }
 
   open(content?: string): void {
     this.isOpen = true;

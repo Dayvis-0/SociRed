@@ -1,11 +1,19 @@
 <div class="profile-cover">
   <div class="profile-cover-gradient">🎨</div>
+  
+  <button 
+    *ngIf="isOwnProfile"
+    class="edit-cover-btn" 
+    (click)="onEditCover()"
+    title="Editar foto de portada">
+    📷 Editar portada
+  </button>
 </div>
 
 <div class="profile-header-section">
   <div class="profile-header-content">
     <div class="profile-avatar-container">
-      <div class="profile-avatar-large">{{ userInitials }}</div>
+      <div class="profile-avatar-large">{{ userInitials || '??' }}</div>
       <button 
         *ngIf="isOwnProfile" 
         class="edit-avatar-btn" 
@@ -16,7 +24,7 @@
     </div>
     
     <div class="profile-header-info">
-      <h1 class="profile-name-large">{{ userName }}</h1>
+      <h1 class="profile-name-large">{{ userName || 'Usuario' }}</h1>
       <div class="profile-friends-count">{{ friendsCount }} amigos</div>
       <div class="profile-friends-preview">
         <div 
@@ -35,14 +43,6 @@
       ✏️ Editar perfil
     </button>
   </div>
-  
-  <button 
-    *ngIf="isOwnProfile"
-    class="edit-cover-btn" 
-    (click)="onEditCover()"
-    title="Editar foto de portada">
-    📷 Editar portada
-  </button>
   
   <div class="profile-header-divider"></div>
   

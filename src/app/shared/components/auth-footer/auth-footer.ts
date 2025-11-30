@@ -8,6 +8,6 @@ import { CommonModule } from '@angular/common';
   templateUrl: './auth-footer.html',
   styleUrls: ['./auth-footer.css']
 })
-export class AuthFooterComponent {
+export class AuthFooter {
   currentYear: number = new Date().getFullYear();
 }

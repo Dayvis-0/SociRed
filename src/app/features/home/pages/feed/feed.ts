@@ -9,7 +9,6 @@ import { LikeButtonComponent } from '../../components/like-button/like-button';
 import { AuthService } from '../../../../core/services/auth.service';
 import { User } from '../../../../core/models/user.model';
 import { Subscription } from 'rxjs';
-import { FooterComponent } from '../../../../shared/components/footer/footer';
 
 interface Post {
   id: number;
@@ -36,7 +35,7 @@ interface Post {
     CreatePostModalComponent,
     CommentSectionComponent,
     LikeButtonComponent,
-    FooterComponent
+
   ],
   templateUrl: './feed.html',
   styleUrl: './feed.css'

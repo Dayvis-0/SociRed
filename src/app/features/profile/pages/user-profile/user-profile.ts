@@ -1,7 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProfileHeader } from '../../components/profile-header/profile-header';
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar';
+import { CreatePostModalComponent } from '../../../home/components/create-post-modal/create-post-modal'; 
+import { CommentSectionComponent } from '../../../home/components/comment-section/comment-section';
+import { LikeButtonComponent } from '../../../home/components/like-button/like-button'; 
+import { AuthService } from '../../../../core/services/auth.service';
+import { User } from '../../../../core/models/user.model';
+import { Subscription } from 'rxjs';
 
 interface Suggestion {
   initials: string;
@@ -22,6 +28,7 @@ interface Post {
   likes: number;
   comments: number;
   liked: boolean;
+  avatarClass: string;
 }
 
 interface AboutInfo {
@@ -47,20 +54,32 @@ interface Video {
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, ProfileHeader, NavbarComponent],
+  imports: [
+    CommonModule, 
+    ProfileHeader, 
+    NavbarComponent,
+    CreatePostModalComponent,
+    CommentSectionComponent,
+    LikeButtonComponent
+  ],
   templateUrl: './user-profile.html',
   styleUrl: './user-profile.css'
 })
-export class UserProfile {
+export class UserProfile implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+  
+  @ViewChild(CreatePostModalComponent) createPostModal!: CreatePostModalComponent;
+
   activeTab: string = 'publicaciones';
-  showEditProfileModal: boolean = false;
-  showEditPostModal: boolean = false;
-  showCreatePostModal: boolean = false;
   editingPostId: number | null = null;
 
-  userName: string = 'María González';
-  userInitials: string = 'MG';
+  // Datos del usuario desde Firebase
+  currentUser: User | null = null;
+  userName: string = '';
+  userInitials: string = '';
   friendsCount: number = 248;
+  
+  private userSubscription?: Subscription;
 
   suggestions: Suggestion[] = [
     { initials: 'RM', name: 'Roberto Morales', mutualFriends: 4, gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', following: false },
@@ -82,7 +101,8 @@ export class UserProfile {
       imageEmoji: '🎨',
       likes: 24,
       comments: 5,
-      liked: true
+      liked: true,
+      avatarClass: ''
     },
     {
       id: 2,
@@ -93,7 +113,8 @@ export class UserProfile {
       hasImage: false,
       likes: 18,
       comments: 7,
-      liked: false
+      liked: false,
+      avatarClass: ''
     },
     {
       id: 3,
@@ -105,7 +126,8 @@ export class UserProfile {
       imageEmoji: '📚',
       likes: 32,
       comments: 8,
-      liked: false
+      liked: false,
+      avatarClass: ''
     },
     {
       id: 4,
@@ -116,7 +138,8 @@ export class UserProfile {
       hasImage: false,
       likes: 45,
       comments: 12,
-      liked: false
+      liked: false,
+      avatarClass: ''
     }
   ];
 
@@ -149,6 +172,42 @@ export class UserProfile {
 
   photoEmojis: string[] = ['🏔️', '🌅', '🎨', '📸', '🌸', '🌊', '🖼️', '🌆', '🎭', '🎪', '🎡', '🎢'];
 
+  ngOnInit(): void {
+    // Suscribirse al usuario actual de Firebase
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        this.userName = user.displayName;
+        this.userInitials = this.getInitials(user.displayName);
+        
+        // Actualizar posts con datos del usuario
+        this.posts = this.posts.map(post => ({
+          ...post,
+          author: this.userName,
+          initials: this.userInitials
+        }));
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar suscripción
+    this.userSubscription?.unsubscribe();
+  }
+
+  /**
+   * Obtiene las iniciales del nombre del usuario
+   */
+  getInitials(displayName: string): string {
+    if (!displayName) return '??';
+    
+    const names = displayName.trim().split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return displayName.substring(0, 2).toUpperCase();
+  }
+
   onTabChange(tabId: string): void {
     this.activeTab = tabId;
   }
@@ -163,44 +222,49 @@ export class UserProfile {
   }
 
   openCreatePostModal(): void {
-    this.showCreatePostModal = true;
-  }
-
-  closeCreatePostModal(): void {
-    this.showCreatePostModal = false;
-  }
-
-  openEditPostModal(postId: number): void {
-    this.editingPostId = postId;
-    this.showEditPostModal = true;
-  }
-
-  closeEditPostModal(): void {
-    this.showEditPostModal = false;
     this.editingPostId = null;
+    this.createPostModal.open();
   }
 
-  openEditProfileModal(): void {
-    this.showEditProfileModal = true;
+  onEdit(post: Post): void {
+    this.editingPostId = post.id;
+    this.createPostModal.open(post.content);
+    console.log('Editando post:', post.id);
   }
 
-  closeEditProfileModal(): void {
-    this.showEditProfileModal = false;
-  }
-
-  saveProfile(): void {
-    console.log('Guardando perfil...');
-    this.closeEditProfileModal();
-  }
-
-  savePost(): void {
-    console.log('Guardando post...');
-    this.closeEditPostModal();
-  }
-
-  publishPost(): void {
-    console.log('Publicando post...');
-    this.closeCreatePostModal();
+  onPublishPost(data: {content: string, imageUrl?: string}): void {
+    if (this.editingPostId) {
+      // Editar post existente
+      const postIndex = this.posts.findIndex(p => p.id === this.editingPostId);
+      if (postIndex !== -1) {
+        this.posts[postIndex].content = data.content;
+        this.posts[postIndex].time = 'Editado justo ahora';
+        if (data.imageUrl) {
+          this.posts[postIndex].hasImage = true;
+          this.posts[postIndex].imageEmoji = '🖼️';
+        }
+        console.log('Publicación editada:', this.posts[postIndex]);
+      }
+      this.editingPostId = null;
+    } else {
+      // Crear nuevo post
+      const newPost: Post = {
+        id: Date.now(),
+        author: this.userName,
+        initials: this.userInitials,
+        time: 'Justo ahora',
+        content: data.content,
+        hasImage: !!data.imageUrl,
+        imageEmoji: data.imageUrl ? '🖼️' : undefined,
+        likes: 0,
+        comments: 0,
+        liked: false,
+        avatarClass: ''
+      };
+      
+      this.posts.unshift(newPost);
+      console.log('Nueva publicación creada:', newPost);
+    }
   }
 
   onEditAvatar(): void {
@@ -209,5 +273,10 @@ export class UserProfile {
 
   onEditCover(): void {
     console.log('Editar portada');
+  }
+
+  get placeholderText(): string {
+    const firstName = this.userName.split(' ')[0] || 'Usuario';
+    return `¿Qué estás pensando, ${firstName}?`;
   }
 }

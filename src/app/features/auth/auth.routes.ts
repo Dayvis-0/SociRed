@@ -16,7 +16,7 @@ export const authRoutes: Routes = [
   },
   {
     path: 'complete-profile',
-    loadComponent: () => import('./pages/complete-profile/complete-profile').then(m => m.CompleteProfileComponent)
+    loadComponent: () => import('./pages/complete-profile/complete-profile').then(m => m.CompleteProfile)
   },
   {
     path: '',

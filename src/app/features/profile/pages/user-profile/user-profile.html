@@ -3,12 +3,9 @@
   <main class="profile-main">
     <!-- Header del perfil con tabs -->
     <app-profile-header
-      [userName]="userName"
-      [userInitials]="userInitials"
       [friendsCount]="friendsCount"
       [isOwnProfile]="true"
       (tabChange)="onTabChange($event)"
-      (editProfile)="openEditProfileModal()"
       (editAvatar)="onEditAvatar()"
       (editCover)="onEditCover()">
     </app-profile-header>
@@ -41,50 +38,55 @@
         </div>
 
         <div class="profile-posts">
+          <!-- CREATE POST (Reutilizado del Feed) -->
           <div class="create-post">
-            <div class="create-post-input">
+            <div class="create-post-input" (click)="openCreatePostModal()">
               <div class="create-post-avatar">{{ userInitials }}</div>
               <input 
                 type="text" 
                 class="create-post-field" 
-                [placeholder]="'¿Qué estás pensando, ' + userName.split(' ')[0] + '?'"
-                (click)="openCreatePostModal()"
+                [placeholder]="placeholderText"
                 readonly>
             </div>
           </div>
 
-          <article class="post" *ngFor="let post of posts">
+          <!-- POSTS (Reutilizado del Feed) -->
+          <article *ngFor="let post of posts" class="post">
             <div class="post-header">
-              <div class="post-avatar">{{ post.initials }}</div>
+              <div class="post-avatar" [ngClass]="post.avatarClass">
+                {{ post.initials }}
+              </div>
               <div class="post-info">
                 <div class="post-author">{{ post.author }}</div>
                 <div class="post-time">{{ post.time }}</div>
               </div>
-              <div class="post-menu" (click)="openEditPostModal(post.id)">⋯</div>
+              <div class="post-menu" (click)="onEdit(post)">⋯</div>
             </div>
+
             <div class="post-content">{{ post.content }}</div>
-            <div class="post-image" *ngIf="post.hasImage">{{ post.imageEmoji }}</div>
-            <div class="post-stats">
-              <span>❤️ {{ post.likes }} Me gusta</span>
-              <span>{{ post.comments }} Comentarios</span>
+
+            <div *ngIf="post.hasImage" class="post-image">
+              {{ post.imageEmoji }}
             </div>
+
             <div class="post-actions">
-              <button 
-                class="post-action"
-                [class.liked]="post.liked"
-                (click)="toggleLike(post)">
-                <span>{{ post.liked ? '❤️' : '🤍' }}</span>
-                <span>Me gusta</span>
-              </button>
-              <button class="post-action">
-                <span>💬</span>
-                <span>Comentar</span>
-              </button>
-              <button class="post-action" (click)="openEditPostModal(post.id)">
+              <app-like-button
+                [liked]="post.liked"
+                [likesCount]="post.likes"
+                [showCount]="false"
+                (likeToggle)="toggleLike(post)"
+              ></app-like-button>
+              <button class="post-action" (click)="onEdit(post)">
                 <span>✏️</span>
                 <span>Editar</span>
               </button>
             </div>
+
+            <!-- COMMENT SECTION (Reutilizado del Feed) -->
+            <app-comment-section 
+              [postId]="post.id" 
+              [commentsCount]="post.comments"
+            ></app-comment-section>
           </article>
         </div>
       </div>
@@ -159,102 +161,5 @@
   </main>
 </div>
 
-<!-- Modal Editar Perfil -->
-<div *ngIf="showEditProfileModal" class="modal-overlay" (click)="closeEditProfileModal()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Editar perfil</h2>
-      <button (click)="closeEditProfileModal()" class="close-modal-btn">&times;</button>
-    </div>
-    
-    <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-      <div class="edit-profile-section">
-        <label class="edit-label">Foto de perfil</label>
-        <div class="edit-avatar-preview">
-          <div class="profile-avatar-large">{{ userInitials }}</div>
-          <button class="change-photo-btn">Cambiar foto</button>
-        </div>
-      </div>
-      
-      <div class="edit-profile-section">
-        <label class="edit-label">Nombre</label>
-        <input type="text" class="edit-input" [value]="userName" placeholder="Tu nombre">
-      </div>
-      
-      <div class="edit-profile-section">
-        <label class="edit-label">Biografía</label>
-        <textarea class="edit-textarea" placeholder="Cuéntanos sobre ti..." rows="3">Amante de la tecnología y el aprendizaje continuo 💻✨</textarea>
-      </div>
-      
-      <div class="edit-profile-section">
-        <label class="edit-label">Ciudad</label>
-        <input type="text" class="edit-input" value="Lima, Perú" placeholder="Tu ciudad">
-      </div>
-      
-      <div class="edit-profile-section">
-        <label class="edit-label">Sitio web</label>
-        <input type="text" class="edit-input" placeholder="https://tusitio.com">
-      </div>
-    </div>
-    
-    <div class="modal-footer">
-      <button (click)="closeEditProfileModal()" class="cancel-btn">Cancelar</button>
-      <button (click)="saveProfile()" class="publish-btn">Guardar cambios</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Editar Post -->
-<div *ngIf="showEditPostModal" class="modal-overlay" (click)="closeEditPostModal()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Editar publicación</h2>
-      <button (click)="closeEditPostModal()" class="close-modal-btn">&times;</button>
-    </div>
-    
-    <div class="modal-body">
-      <div class="user-info-modal">
-        <div class="profile-avatar-large" style="width: 40px; height: 40px; font-size: 16px;">
-          {{ userInitials }}
-        </div>
-        <span class="modal-user-name">{{ userName }}</span>
-      </div>
-      
-      <textarea class="post-textarea" placeholder="¿Qué estás pensando?"></textarea>
-    </div>
-    
-    <div class="modal-footer">
-      <button (click)="closeEditPostModal()" class="cancel-btn">Cancelar</button>
-      <button (click)="savePost()" class="publish-btn">Guardar cambios</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Crear Publicación -->
-<div *ngIf="showCreatePostModal" class="modal-overlay" (click)="closeCreatePostModal()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Crear publicación</h2>
-      <button (click)="closeCreatePostModal()" class="close-modal-btn">&times;</button>
-    </div>
-    
-    <div class="modal-body">
-      <div class="user-info-modal">
-        <div class="profile-avatar-large" style="width: 40px; height: 40px; font-size: 16px;">
-          {{ userInitials }}
-        </div>
-        <span class="modal-user-name">{{ userName }}</span>
-      </div>
-      
-      <textarea class="post-textarea" placeholder="¿Qué está pasando?"></textarea>
-      
-      <div class="post-options">
-        <button class="option-btn" title="Agregar foto">📷 Foto/Video</button>
-      </div>
-    </div>
-    
-    <div class="modal-footer">
-      <button (click)="publishPost()" class="publish-btn">Publicar</button>
-    </div>
-  </div>
-</div>
+<!-- CREATE POST MODAL (Reutilizado del Feed) -->
+<app-create-post-modal (publishPost)="onPublishPost($event)"></app-create-post-modal>

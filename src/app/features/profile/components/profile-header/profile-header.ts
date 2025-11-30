@@ -1,5 +1,8 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../../core/services/auth.service';
+import { User } from '../../../../core/models/user.model';
+import { Subscription } from 'rxjs';
 
 interface Friend {
   initials: string;
@@ -13,16 +16,23 @@ interface Friend {
   templateUrl: './profile-header.html',
   styleUrl: './profile-header.css'
 })
-export class ProfileHeader {
-  @Input() userName: string = 'María González';
-  @Input() friendsCount: number = 248;
-  @Input() userInitials: string = 'MG';
+export class ProfileHeader implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+  
+  @Input() friendsCount: number = 0;
   @Input() isOwnProfile: boolean = true;
   
   @Output() editProfile = new EventEmitter<void>();
   @Output() editAvatar = new EventEmitter<void>();
   @Output() editCover = new EventEmitter<void>();
   @Output() tabChange = new EventEmitter<string>();
+
+  // Datos del usuario desde Firebase
+  currentUser: User | null = null;
+  userName: string = '';
+  userInitials: string = '';
+  
+  private userSubscription?: Subscription;
 
   activeTab: string = 'publicaciones';
 
@@ -41,6 +51,35 @@ export class ProfileHeader {
     { id: 'amigos', icon: '👥', label: 'Amigos' },
     { id: 'fotos', icon: '📷', label: 'Fotos' },
   ];
+
+  ngOnInit(): void {
+    // Suscribirse al usuario actual de Firebase
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        this.userName = user.displayName;
+        this.userInitials = this.getInitials(user.displayName);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar suscripción
+    this.userSubscription?.unsubscribe();
+  }
+
+  /**
+   * Obtiene las iniciales del nombre del usuario
+   */
+  getInitials(displayName: string): string {
+    if (!displayName) return '??';
+    
+    const names = displayName.trim().split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return displayName.substring(0, 2).toUpperCase();
+  }
 
   onTabClick(tabId: string): void {
     this.activeTab = tabId;

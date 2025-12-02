@@ -1,0 +1,11 @@
+/* --- FEED CONTAINER --- */
+.feed {
+  flex-basis: 900px;
+  max-width: 700px;
+  min-width: 400px;
+  flex-grow: 0;
+  flex-shrink: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

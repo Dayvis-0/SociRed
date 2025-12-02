@@ -1,0 +1,27 @@
+/* --- PROFILE CONTAINER --- */
+.profile-container {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px 20px 16px;
+}
+
+/* --- PROFILE MAIN --- */
+.profile-main {
+    width: 100%;
+    max-width: 900px;
+}
+
+/* --- PROFILE POSTS --- */
+.profile-posts {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* --- PROFILE CONTENT --- */
+.profile-content {
+    margin-top: 16px;
+}

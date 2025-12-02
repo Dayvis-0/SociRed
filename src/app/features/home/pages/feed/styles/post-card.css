@@ -1,0 +1,173 @@
+/* --- POST CONTAINER --- */
+.post {
+  background: var(--surface-color);
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- POST HEADER --- */
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* --- POST AVATAR --- */
+.post-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--surface-color);
+  font-weight: 600;
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.post-avatar span {
+  z-index: 1;
+}
+
+/* Avatar alternativo - gradientes */
+.post-avatar.alt1 {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.post-avatar.alt2 {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.post-avatar.alt3 {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* --- POST INFO --- */
+.post-info {
+  flex: 1;
+}
+
+.post-author {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 16px;
+}
+
+.post-time {
+  font-size: 14px;
+  color: var(--secondary-text-color);
+}
+
+/* --- POST MENU (Three dots) --- */
+.post-menu {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--secondary-text-color);
+  transition: background 0.2s;
+  font-size: 20px;
+}
+
+.post-menu:hover {
+  background: var(--light-bg);
+}
+
+/* --- POST CONTENT --- */
+.post-content {
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* --- POST IMAGE --- */
+.post-image {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  background: var(--light-bg);
+  position: relative;
+}
+
+.post-image img {
+  width: 100%;
+  height: auto;
+  max-height: 600px;
+  object-fit: contain;
+  display: block;
+  background: #f8f9fa;
+}
+
+/* Loading state para imágenes */
+.post-image.loading {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+}
+
+.post-image.loading::after {
+  content: "⏳";
+  font-size: 32px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Error state para imágenes que no cargan */
+.post-image.error {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  color: #c62828;
+  font-size: 16px;
+}
+
+.post-image.error::after {
+  content: "❌ Error al cargar imagen";
+}
+
+/* --- POST STATS --- */
+.post-stats {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: var(--secondary-text-color);
+}
+
+.post-likes,
+.post-comments {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.post-likes:hover,
+.post-comments:hover {
+  color: var(--primary-color);
+}

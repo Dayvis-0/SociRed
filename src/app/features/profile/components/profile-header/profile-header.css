@@ -1,23 +1,7 @@
-/* --- COVER PHOTO --- */
-.profile-cover {
-    width: 100%;
-    height: 350px;
-    background: var(--surface-color);
-    border-radius: 0 0 8px 8px;
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    position: relative;
-}
-
-.profile-cover-gradient {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 80px;
-}
+@import './styles/cover.css';
+@import './styles/avatar.css';
+@import './styles/tabs.css';
+@import './styles/responsive.css';
 
 /* --- PROFILE HEADER SECTION --- */
 .profile-header-section {
@@ -35,22 +19,7 @@
     gap: 20px;
 }
 
-.profile-avatar-large {
-    width: 168px;
-    height: 168px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: 4px solid var(--surface-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--surface-color);
-    font-weight: 700;
-    font-size: 64px;
-    box-shadow: var(--shadow);
-    flex-shrink: 0;
-}
-
+/* --- PROFILE INFO --- */
 .profile-header-info {
     flex: 1;
     padding-bottom: 16px;
@@ -71,6 +40,7 @@
     font-weight: 400;
 }
 
+/* --- FRIENDS PREVIEW --- */
 .profile-friends-preview {
     display: flex;
     gap: 0;
@@ -102,273 +72,9 @@
     z-index: 10;
 }
 
+/* --- DIVIDER --- */
 .profile-header-divider {
     height: 1px;
     background: var(--border-color);
     margin: 0 32px;
-}
-
-/* --- PROFILE TABS --- */
-.profile-tabs {
-    background: var(--surface-color);
-    padding: 0 32px;
-    display: flex;
-    gap: 8px;
-    border-radius: 0 0 8px 8px;
-}
-
-.profile-tab {
-    padding: 16px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-    color: var(--secondary-text-color);
-    font-weight: 600;
-    font-size: 15px;
-    transition: all 0.2s;
-    position: relative;
-    border-bottom: 3px solid transparent;
-}
-
-.profile-tab:hover {
-    background: var(--light-bg);
-    border-radius: 8px 8px 0 0;
-}
-
-.profile-tab.active {
-    color: var(--primary-action-color);
-    border-bottom-color: var(--primary-action-color);
-}
-
-.profile-tab span:first-child {
-    font-size: 20px;
-}
-
-/* --- EDIT BUTTONS --- */
-.profile-avatar-container {
-    position: relative;
-    display: inline-block;
-}
-
-.edit-avatar-btn {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #e4e6eb;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.edit-avatar-btn:hover {
-    background: #f0f2f5;
-    transform: scale(1.05);
-}
-
-.edit-cover-btn {
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    background: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    color: #050505;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.edit-cover-btn:hover {
-    background: #f0f2f5;
-}
-
-.edit-profile-btn {
-    background: #1877f2;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.2s;
-    margin-left: auto;
-    align-self: flex-start;
-    margin-top: 20px;
-}
-
-.edit-profile-btn:hover {
-    background: #166fe5;
-}
-
-/* --- RESPONSIVE --- */
-@media (max-width: 768px) {
-    .profile-cover {
-        height: 200px;
-        border-radius: 0;
-    }
-
-    .profile-cover-gradient {
-        font-size: 60px;
-    }
-
-    .profile-header-section {
-        margin-top: -50px;
-    }
-
-    .profile-header-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 16px;
-        gap: 12px;
-    }
-
-    .profile-avatar-large {
-        width: 120px;
-        height: 120px;
-        font-size: 48px;
-        margin-top: -60px;
-    }
-
-    .profile-header-info {
-        padding-bottom: 8px;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .profile-name-large {
-        font-size: 24px;
-    }
-
-    .profile-friends-count {
-        font-size: 14px;
-    }
-
-    .profile-friends-preview {
-        justify-content: center;
-    }
-
-    .profile-header-divider {
-        margin: 0 16px;
-    }
-
-    .profile-tabs {
-        padding: 0 8px;
-        overflow-x: auto;
-        gap: 4px;
-    }
-
-    .profile-tab {
-        padding: 12px 12px;
-        flex-shrink: 0;
-    }
-
-    .profile-tab span:last-child {
-        display: none;
-    }
-
-    .profile-tab span:first-child {
-        font-size: 22px;
-    }
-
-    .edit-profile-btn {
-        padding: 8px 16px;
-        font-size: 14px;
-    }
-    
-    .edit-cover-btn {
-        padding: 6px 12px;
-        font-size: 14px;
-        bottom: 12px;
-        right: 12px;
-    }
-    
-    .edit-avatar-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
-    }
-}
-
-@media (max-width: 480px) {
-    .profile-cover {
-        height: 150px;
-    }
-
-    .profile-cover-gradient {
-        font-size: 50px;
-    }
-
-    .profile-header-section {
-        margin-top: -40px;
-    }
-
-    .profile-avatar-large {
-        width: 100px;
-        height: 100px;
-        font-size: 40px;
-        margin-top: -50px;
-    }
-
-    .profile-name-large {
-        font-size: 20px;
-    }
-
-    .profile-friends-count {
-        font-size: 13px;
-    }
-
-    .friend-preview-avatar {
-        width: 28px;
-        height: 28px;
-        font-size: 11px;
-        margin-left: -6px;
-    }
-
-    .friend-preview-avatar:first-child {
-        margin-left: 0;
-    }
-
-    .profile-header-content {
-        padding: 12px;
-    }
-
-    .profile-header-divider {
-        margin: 0 12px;
-    }
-
-    .profile-tabs {
-        padding: 0 4px;
-    }
-
-    .profile-tab {
-        padding: 10px 8px;
-        gap: 4px;
-    }
-
-    .profile-tab span:first-child {
-        font-size: 20px;
-    }
 }

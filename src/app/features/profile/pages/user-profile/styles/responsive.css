@@ -1,0 +1,39 @@
+/* --- TABLET AND MOBILE (768px) --- */
+@media (max-width: 768px) {
+    /* Friends Grid */
+    .friends-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    /* Photos Grid */
+    .photos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    /* Profile Container */
+    .profile-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Profile Main */
+    .profile-main {
+        max-width: 700px;
+        width: 100%;
+    }
+
+    /* Post and Create Post - Reutilizando del Feed */
+    .post, 
+    .create-post {
+        padding: 12px;
+    }
+
+    /* Post Actions - Hide text on mobile */
+    .post-action span:last-child {
+        display: none;
+    }
+
+    .post-action {
+        padding: 10px 6px;
+    }
+}

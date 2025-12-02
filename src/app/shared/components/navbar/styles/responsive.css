@@ -1,0 +1,157 @@
+/* --- TABLET (768px) --- */
+@media (max-width: 768px) {
+  /* Navbar */
+  .navbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  
+  /* Navbar Left */
+  .navbar-left {
+    gap: 8px;
+    flex: 0 1 auto;
+  }
+  
+  /* Search */
+  .search-container {
+    max-width: 180px;
+    flex-shrink: 1;
+  }
+  
+  /* Logo */
+  .app-logo {
+    font-size: 28px;
+  }
+
+  /* Navigation Center */
+  .navbar-center-home {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* Notifications Dropdown */
+  .notifications-dropdown {
+    width: 320px;
+  }
+
+  /* User Menu */
+  .user-dropdown-menu {
+    min-width: 260px;
+  }
+}
+
+/* --- MOBILE LARGE (620px) --- */
+@media (max-width: 620px) {
+  /* Search Container */
+  .search-container {
+    position: static;
+    flex: 0 0 auto;
+  }
+
+  /* Search Input Wrapper - Hidden by default */
+  .search-input-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+    pointer-events: none;
+    gap: 0;
+    z-index: 200;
+  }
+
+  /* Search Toggle - Visible on mobile */
+  .search-toggle {
+    display: inline-flex;
+    margin-left: 6px;
+  }
+
+  /* Search Icon - Hidden by default */
+  .search-icon-inline {
+    display: none;
+  }
+
+  /* Search Container Open State */
+  .search-container.open .search-input-wrapper {
+    width: calc(100vw - 24px);
+    max-width: none;
+    padding: 10px 16px;
+    opacity: 1;
+    pointer-events: auto;
+    left: 12px;
+    top: 12px;
+  }
+
+  .search-container.open .search-icon-inline {
+    display: inline-grid;
+  }
+
+  .search-container.open .search-toggle {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Navigation Items */
+  .nav-center-home-item span:first-child {
+    font-size: 15px;
+  }
+
+  /* Notifications Dropdown */
+  .notifications-dropdown {
+    width: calc(100vw - 24px);
+    right: -8px;
+  }
+}
+
+/* --- MOBILE SMALL (480px) --- */
+@media (max-width: 480px) {
+  /* Navbar */
+  .navbar {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  
+  /* Logo */
+  .app-logo {
+    font-size: 24px;
+  }
+
+  /* Navigation Items */
+  .nav-center-home-item {
+    padding: 6px 8px;
+  }
+  
+  .nav-center-home-item span:first-child {
+    font-size: 15px;
+  }
+  
+  /* Hide navigation text on mobile */
+  .nav-center-home-text {
+    display: none;
+  }
+
+  /* Navigation Center */
+  .navbar-center-home {
+    justify-content: space-around;
+    flex: 1 1 0%;
+  }
+
+  /* User Menu */
+  .user-dropdown-menu {
+    right: -8px;
+    min-width: 240px;
+  }
+
+  .user-menu-header {
+    padding: 10px 12px;
+  }
+
+  .user-menu-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+}

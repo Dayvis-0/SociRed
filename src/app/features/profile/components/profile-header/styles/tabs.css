@@ -1,0 +1,42 @@
+/* ===================================================================
+   PROFILE TABS - ESTILOS DE PESTAÑAS
+   Archivo: src/app/features/profile/components/profile-header/styles/tabs.css
+   =================================================================== */
+
+/* --- PROFILE TABS --- */
+.profile-tabs {
+    background: var(--surface-color);
+    padding: 0 32px;
+    display: flex;
+    gap: 8px;
+    border-radius: 0 0 8px 8px;
+}
+
+.profile-tab {
+    padding: 16px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.2s;
+    position: relative;
+    border-bottom: 3px solid transparent;
+}
+
+.profile-tab:hover {
+    background: var(--light-bg);
+    border-radius: 8px 8px 0 0;
+}
+
+.profile-tab.active {
+    color: var(--primary-action-color);
+    border-bottom-color: var(--primary-action-color);
+}
+
+.profile-tab span:first-child {
+    font-size: 20px;
+}

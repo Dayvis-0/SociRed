@@ -1,0 +1,74 @@
+/* ===================================================================
+   PROFILE AVATAR - ESTILOS DE AVATAR Y BOTONES
+   Archivo: src/app/features/profile/components/profile-header/styles/avatar.css
+   =================================================================== */
+
+/* --- AVATAR CONTAINER --- */
+.profile-avatar-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* --- AVATAR LARGE --- */
+.profile-avatar-large {
+    width: 168px;
+    height: 168px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 4px solid var(--surface-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--surface-color);
+    font-weight: 700;
+    font-size: 64px;
+    box-shadow: var(--shadow);
+    flex-shrink: 0;
+}
+
+/* --- EDIT AVATAR BUTTON --- */
+.edit-avatar-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #e4e6eb;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.edit-avatar-btn:hover {
+    background: #f0f2f5;
+    transform: scale(1.05);
+}
+
+/* --- EDIT PROFILE BUTTON --- */
+.edit-profile-btn {
+    background: #1877f2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+    margin-left: auto;
+    align-self: flex-start;
+    margin-top: 20px;
+}
+
+.edit-profile-btn:hover {
+    background: #166fe5;
+}

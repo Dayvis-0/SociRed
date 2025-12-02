@@ -1,0 +1,44 @@
+/* --- CREATE POST CONTAINER --- */
+.create-post {
+  background: var(--surface-color);
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- CREATE POST INPUT --- */
+.create-post-input {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* --- CREATE POST AVATAR --- */
+.create-post-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--surface-color);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* --- CREATE POST FIELD --- */
+.create-post-field {
+  flex: 1;
+  padding: 12px 18px;
+  border-radius: 24px;
+  background: var(--light-bg);
+  border: none;
+  cursor: pointer;
+  color: var(--secondary-text-color);
+  font-size: 16px;
+}
+
+.create-post-field:hover {
+  background: var(--hover-bg);
+}

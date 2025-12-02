@@ -1,0 +1,109 @@
+/* --- SUGGESTIONS CARD HORIZONTAL --- */
+.suggestions-card-horizontal {
+    background: var(--surface-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    margin-top: 16px;
+    padding: 16px 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    display: block;
+}
+
+/* --- SUGGESTIONS TITLE --- */
+.suggestions-card-horizontal .suggestions-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-color);
+    padding: 0 16px 12px;
+    display: block;
+    white-space: normal;
+}
+
+/* --- SUGGESTION ITEM --- */
+.suggestions-card-horizontal .suggestion-item {
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    width: 140px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--light-bg);
+    flex-shrink: 0;
+    margin-left: 8px;
+    white-space: normal;
+    transition: background 0.2s;
+}
+
+.suggestions-card-horizontal .suggestion-item:hover {
+    background: var(--hover-bg);
+}
+
+.suggestions-card-horizontal .suggestion-item:first-child {
+    margin-left: 16px;
+}
+
+.suggestions-card-horizontal .suggestion-item:last-child {
+    margin-right: 16px;
+}
+
+/* --- SUGGESTION AVATAR --- */
+.suggestions-card-horizontal .suggestion-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--surface-color);
+    font-weight: 600;
+    font-size: 32px;
+    margin: 0 auto 8px;
+}
+
+/* --- SUGGESTION INFO --- */
+.suggestions-card-horizontal .suggestion-info {
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.suggestions-card-horizontal .suggestion-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suggestions-card-horizontal .suggestion-mutual {
+    font-size: 12px;
+    color: var(--secondary-text-color);
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+/* --- FOLLOW BUTTON --- */
+.suggestions-card-horizontal .sidebar-follow-btn {
+    background: var(--primary-action-color);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.suggestions-card-horizontal .sidebar-follow-btn:hover {
+    background: #166fe5;
+}
+
+.suggestions-card-horizontal .sidebar-follow-btn.following {
+    background: var(--hover-bg);
+    color: var(--text-color);
+}

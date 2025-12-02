@@ -1,0 +1,31 @@
+/* --- TABLET AND MOBILE (768px) --- */
+@media (max-width: 768px) {
+  /* Feed Layout */
+  .feed {
+    flex-basis: 100%;
+    min-width: 0;
+    width: 100%;
+    max-width: 600px;
+    padding: 0 8px;
+  }
+
+  /* Post and Create Post */
+  .post, 
+  .create-post {
+    padding: 12px;
+  }
+
+  /* Post Actions - Hide text on mobile */
+  .post-action span:last-child {
+    display: none;
+  }
+
+  .post-action {
+    padding: 10px 6px;
+  }
+
+  /* Post Image */
+  .post-image img {
+    max-height: 400px;
+  }
+}

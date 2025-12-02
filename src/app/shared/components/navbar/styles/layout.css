@@ -1,0 +1,45 @@
+/* --- NAVBAR BASE --- */
+.navbar {
+  background: var(--surface-color);
+  box-shadow: var(--shadow);
+  padding: 5px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 16px;
+}
+
+/* --- NAVBAR LEFT --- */
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex: 1;
+}
+
+/* --- NAVBAR RIGHT --- */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* --- LOGO --- */
+.logo-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.app-logo {
+  font-size: 32px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.app-logo:hover {
+  transform: scale(1.1);
+}

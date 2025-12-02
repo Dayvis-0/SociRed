@@ -1,4 +1,3 @@
-// src/app/shared/components/sidebar-left/sidebar-left.ts
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';

@@ -1,4 +1,3 @@
-// src/app/shared/components/sidebar-right/sidebar-right.ts
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -38,7 +37,7 @@ export class SidebarRight implements OnInit, OnDestroy {
   
   onlineUsers: OnlineUser[] = [];
   loadingOnlineUsers: boolean = true;
-  
+
   private userSubscription?: Subscription;
   private friendsSubscription?: Subscription;
 

@@ -1,4 +1,3 @@
-// src/app/shared/components/navbar/navbar.ts
 import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';

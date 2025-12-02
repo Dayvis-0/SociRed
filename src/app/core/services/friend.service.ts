@@ -1,5 +1,3 @@
-// src/app/core/services/friend.service.ts
-
 import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
@@ -23,6 +21,7 @@ import { Suggestion, Friendship } from '../models/suggestion.model';
 import { User } from '../models/user.model';
 import { NotificationService } from './notification.service';
 import { AuthService } from './auth.service';
+import { UserStatsService } from './user-stats.service'; // ⬅️ NUEVO
 
 @Injectable({
   providedIn: 'root'
@@ -31,6 +30,7 @@ export class FriendService {
   private firestore = inject(Firestore);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
+  private userStatsService = inject(UserStatsService); // ⬅️ NUEVO
   
   private friendsCollection = collection(this.firestore, 'friends');
   private suggestionsCollection = collection(this.firestore, 'suggestions');
@@ -186,6 +186,12 @@ export class FriendService {
         updatedAt: serverTimestamp()
       });
 
+      // ⬇️ INCREMENTAR CONTADOR DE AMIGOS PARA AMBOS USUARIOS ⬇️
+      await this.userStatsService.incrementFriendsCount(
+        friendshipData.userId1,
+        friendshipData.userId2
+      );
+
       // Obtener datos del usuario que acepta
       const currentUserDoc = await getDoc(doc(this.firestore, 'users', currentUserId));
       if (currentUserDoc.exists()) {
@@ -206,7 +212,7 @@ export class FriendService {
         friendshipId
       );
 
-      console.log('✅ Solicitud de amistad aceptada');
+      console.log('✅ Solicitud de amistad aceptada y contadores actualizados');
     } catch (error) {
       console.error('❌ Error al aceptar solicitud:', error);
       throw error;
@@ -246,10 +252,26 @@ export class FriendService {
    */
   async removeFriend(friendshipId: string): Promise<void> {
     try {
+      // ⬇️ OBTENER DATOS ANTES DE ELIMINAR ⬇️
+      const friendshipDoc = await getDoc(doc(this.firestore, 'friends', friendshipId));
+      
+      if (friendshipDoc.exists()) {
+        const friendshipData = friendshipDoc.data() as Friendship;
+        
+        // Solo decrementar si la amistad estaba aceptada
+        if (friendshipData.status === 'accepted') {
+          await this.userStatsService.decrementFriendsCount(
+            friendshipData.userId1,
+            friendshipData.userId2
+          );
+        }
+      }
+
+      // Eliminar el documento
       const docRef = doc(this.firestore, 'friends', friendshipId);
       await deleteDoc(docRef);
 
-      console.log('✅ Amistad eliminada');
+      console.log('✅ Amistad eliminada y contadores actualizados');
     } catch (error) {
       console.error('❌ Error al eliminar amistad:', error);
       throw error;

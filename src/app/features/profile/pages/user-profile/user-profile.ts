@@ -34,7 +34,7 @@ export class UserProfile implements OnInit, OnDestroy {
   @ViewChild(CreatePostModal) createPostModal!: CreatePostModal;
 
   activeTab: string = 'publicaciones';
-  editingPostId: number | null = null;
+  editingPostId: string | null = null; // Cambiado de number a string
 
   // Datos del usuario desde Firebase
   currentUser: User | null = null; // Usuario autenticado
@@ -274,7 +274,7 @@ export class UserProfile implements OnInit, OnDestroy {
     } else {
       // Crear nuevo post
       const newPost: Post = {
-        id: Date.now(),
+        id: Date.now().toString(), // Convertir a string
         author: this.userName,
         initials: this.userInitials,
         time: 'Justo ahora',

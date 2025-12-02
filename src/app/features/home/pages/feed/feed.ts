@@ -1,4 +1,3 @@
-// src/app/features/home/pages/feed/feed.ts
 import { Component, ViewChild, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CreatePostModal } from '../../components/create-post-modal/create-post-modal';

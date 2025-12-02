@@ -1,5 +1,3 @@
-// src/app/core/models/comment.model.ts
-
 import { Timestamp } from '@angular/fire/firestore';
 
 /**

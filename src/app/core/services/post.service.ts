@@ -1,5 +1,3 @@
-// src/app/core/services/post.service.ts
-
 import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
@@ -23,12 +21,14 @@ import {
 import { Observable, from, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { Post, CreatePostData, UpdatePostData } from '../models/post.model';
+import { UserStatsService } from './user-stats.service'; // ⬅️ NUEVO
 
 @Injectable({
   providedIn: 'root'
 })
 export class PostService {
   private firestore = inject(Firestore);
+  private userStatsService = inject(UserStatsService); // ⬅️ NUEVO
   private postsCollection = collection(this.firestore, 'posts');
 
   // ==================== CREAR POST ====================
@@ -54,7 +54,11 @@ export class PostService {
       // Actualizar el postId en el documento
       await updateDoc(docRef, { postId: docRef.id });
 
+      // ⬇️ INCREMENTAR CONTADOR DE POSTS DEL USUARIO ⬇️
+      await this.userStatsService.incrementPostsCount(autorId);
+
       console.log('✅ Post creado con ID:', docRef.id);
+      console.log('✅ Contador de posts incrementado para usuario:', autorId);
       return docRef.id;
     } catch (error) {
       console.error('❌ Error al crear post:', error);
@@ -162,10 +166,25 @@ export class PostService {
   // ==================== ELIMINAR POST ====================
   async deletePost(postId: string): Promise<void> {
     try {
+      // ⬇️ OBTENER DATOS DEL POST ANTES DE ELIMINAR ⬇️
       const docRef = doc(this.firestore, 'posts', postId);
-      await deleteDoc(docRef);
+      const docSnap = await getDoc(docRef);
 
-      console.log('✅ Post eliminado:', postId);
+      if (docSnap.exists()) {
+        const postData = docSnap.data() as Post;
+        const autorId = postData.autorId;
+
+        // Eliminar el post
+        await deleteDoc(docRef);
+
+        // ⬇️ DECREMENTAR CONTADOR DE POSTS DEL USUARIO ⬇️
+        await this.userStatsService.decrementPostsCount(autorId);
+
+        console.log('✅ Post eliminado:', postId);
+        console.log('✅ Contador de posts decrementado para usuario:', autorId);
+      } else {
+        console.warn('⚠️ Post no encontrado:', postId);
+      }
     } catch (error) {
       console.error('❌ Error al eliminar post:', error);
       throw error;

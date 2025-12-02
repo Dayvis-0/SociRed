@@ -1,5 +1,3 @@
-// src/app/core/models/notification.model.ts
-
 import { Timestamp } from '@angular/fire/firestore';
 
 /**

@@ -1,5 +1,3 @@
-// src/app/core/services/notification.service.ts
-
 import { Injectable, inject } from '@angular/core';
 import {
   Firestore,

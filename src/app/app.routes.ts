@@ -1,4 +1,3 @@
-// src/app/app.routes.ts
 import { Routes } from '@angular/router';
 import { authGuard, publicGuard } from './core/guards/auth-guard';
 
@@ -31,5 +30,5 @@ export const routes: Routes = [
   {
     path: '**',
     redirectTo: 'auth/login'
-  }
+  },
 ];

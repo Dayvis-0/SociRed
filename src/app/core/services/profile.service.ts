@@ -1,5 +1,3 @@
-// src/app/features/profile/services/profile.service.ts
-
 import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, query, where, getDocs, limit } from '@angular/fire/firestore';
 import { User } from '../models/user.model';

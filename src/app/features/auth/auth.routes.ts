@@ -1,4 +1,3 @@
-// src/app/features/auth/auth.routes.ts
 import { Routes } from '@angular/router';
 
 export const authRoutes: Routes = [

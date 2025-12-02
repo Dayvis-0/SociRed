@@ -7,7 +7,7 @@ export interface Suggestion {
 }
 
 export interface Post {
-  id: number;
+  id: string;  // Cambiado de number a string para coincidir con Firebase
   author: string;
   initials: string;
   time: string;

@@ -7,7 +7,6 @@ import {
   updateDoc,
   deleteDoc,
   getDoc,
-  getDocs,
   query,
   orderBy,
   limit,
@@ -16,23 +15,31 @@ import {
   Timestamp,
   increment,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  onSnapshot,
+  QuerySnapshot,
+  DocumentData
 } from '@angular/fire/firestore';
-import { Observable, from, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Post, CreatePostData, UpdatePostData } from '../models/post.model';
-import { UserStatsService } from './user-stats.service'; // ⬅️ NUEVO
+import { UserStatsService } from './user-stats.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PostService {
   private firestore = inject(Firestore);
-  private userStatsService = inject(UserStatsService); // ⬅️ NUEVO
+  private userStatsService = inject(UserStatsService);
   private postsCollection = collection(this.firestore, 'posts');
 
   // ==================== CREAR POST ====================
-  async createPost(autorId: string, autorName: string, autorInitials: string, autorPhotoURL: string | undefined, data: CreatePostData): Promise<string> {
+  async createPost(
+    autorId: string, 
+    autorName: string, 
+    autorInitials: string, 
+    autorPhotoURL: string | undefined, 
+    data: CreatePostData
+  ): Promise<string> {
     try {
       const postData = {
         autorId,
@@ -54,11 +61,10 @@ export class PostService {
       // Actualizar el postId en el documento
       await updateDoc(docRef, { postId: docRef.id });
 
-      // ⬇️ INCREMENTAR CONTADOR DE POSTS DEL USUARIO ⬇️
+      // Incrementar contador de posts del usuario
       await this.userStatsService.incrementPostsCount(autorId);
 
       console.log('✅ Post creado con ID:', docRef.id);
-      console.log('✅ Contador de posts incrementado para usuario:', autorId);
       return docRef.id;
     } catch (error) {
       console.error('❌ Error al crear post:', error);
@@ -66,61 +72,82 @@ export class PostService {
     }
   }
 
-  // ==================== OBTENER TODOS LOS POSTS ====================
+  // ==================== OBTENER TODOS LOS POSTS (TIEMPO REAL) ====================
   getAllPosts(limitCount: number = 50): Observable<Post[]> {
-    const q = query(
-      this.postsCollection,
-      orderBy('fecha', 'desc'),
-      limit(limitCount)
-    );
+    return new Observable(observer => {
+      const q = query(
+        this.postsCollection,
+        orderBy('fecha', 'desc'),
+        limit(limitCount)
+      );
 
-    return from(getDocs(q)).pipe(
-      map(snapshot => {
-        return snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            postId: doc.id,
-            ...data,
-            fecha: this.convertToTimestamp(data['fecha']),
-            createdAt: this.convertToTimestamp(data['createdAt']),
-            updatedAt: this.convertToTimestamp(data['updatedAt'])
-          } as Post;
-        });
-      }),
-      catchError(error => {
-        console.error('❌ Error al obtener posts:', error);
-        return of([]);
-      })
-    );
+      // 🔥 onSnapshot escucha cambios en TIEMPO REAL
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot: QuerySnapshot<DocumentData>) => {
+          const posts = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              postId: doc.id,
+              ...data,
+              fecha: this.convertToTimestamp(data['fecha']),
+              createdAt: this.convertToTimestamp(data['createdAt']),
+              updatedAt: this.convertToTimestamp(data['updatedAt'])
+            } as Post;
+          });
+
+          console.log('🔄 Posts actualizados en tiempo real:', posts.length);
+          observer.next(posts);
+        },
+        error => {
+          console.error('❌ Error al escuchar posts:', error);
+          observer.error(error);
+        }
+      );
+
+      // Cleanup: desuscribirse cuando el Observable se cancele
+      return () => {
+        console.log('🛑 Desuscrito de posts en tiempo real');
+        unsubscribe();
+      };
+    });
   }
 
-  // ==================== OBTENER POSTS DE UN USUARIO ====================
+  // ==================== OBTENER POSTS DE UN USUARIO (TIEMPO REAL) ====================
   getUserPosts(autorId: string, limitCount: number = 50): Observable<Post[]> {
-    const q = query(
-      this.postsCollection,
-      where('autorId', '==', autorId),
-      orderBy('fecha', 'desc'),
-      limit(limitCount)
-    );
+    return new Observable(observer => {
+      const q = query(
+        this.postsCollection,
+        where('autorId', '==', autorId),
+        orderBy('fecha', 'desc'),
+        limit(limitCount)
+      );
 
-    return from(getDocs(q)).pipe(
-      map(snapshot => {
-        return snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            postId: doc.id,
-            ...data,
-            fecha: this.convertToTimestamp(data['fecha']),
-            createdAt: this.convertToTimestamp(data['createdAt']),
-            updatedAt: this.convertToTimestamp(data['updatedAt'])
-          } as Post;
-        });
-      }),
-      catchError(error => {
-        console.error('❌ Error al obtener posts del usuario:', error);
-        return of([]);
-      })
-    );
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot: QuerySnapshot<DocumentData>) => {
+          const posts = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              postId: doc.id,
+              ...data,
+              fecha: this.convertToTimestamp(data['fecha']),
+              createdAt: this.convertToTimestamp(data['createdAt']),
+              updatedAt: this.convertToTimestamp(data['updatedAt'])
+            } as Post;
+          });
+
+          console.log('🔄 Posts del usuario actualizados:', posts.length);
+          observer.next(posts);
+        },
+        error => {
+          console.error('❌ Error al escuchar posts del usuario:', error);
+          observer.error(error);
+        }
+      );
+
+      return () => unsubscribe();
+    });
   }
 
   // ==================== OBTENER UN POST POR ID ====================
@@ -166,7 +193,6 @@ export class PostService {
   // ==================== ELIMINAR POST ====================
   async deletePost(postId: string): Promise<void> {
     try {
-      // ⬇️ OBTENER DATOS DEL POST ANTES DE ELIMINAR ⬇️
       const docRef = doc(this.firestore, 'posts', postId);
       const docSnap = await getDoc(docRef);
 
@@ -177,11 +203,10 @@ export class PostService {
         // Eliminar el post
         await deleteDoc(docRef);
 
-        // ⬇️ DECREMENTAR CONTADOR DE POSTS DEL USUARIO ⬇️
+        // Decrementar contador de posts del usuario
         await this.userStatsService.decrementPostsCount(autorId);
 
         console.log('✅ Post eliminado:', postId);
-        console.log('✅ Contador de posts decrementado para usuario:', autorId);
       } else {
         console.warn('⚠️ Post no encontrado:', postId);
       }
@@ -228,11 +253,11 @@ export class PostService {
   }
 
   // ==================== ACTUALIZAR CONTADOR DE COMENTARIOS ====================
-  async updateCommentsCount(postId: string, increment: number): Promise<void> {
+  async updateCommentsCount(postId: string, count: number): Promise<void> {
     try {
       const docRef = doc(this.firestore, 'posts', postId);
       await updateDoc(docRef, {
-        commentsCount: increment > 0 ? increment : 0,
+        commentsCount: count >= 0 ? count : 0,
         updatedAt: serverTimestamp()
       });
     } catch (error) {

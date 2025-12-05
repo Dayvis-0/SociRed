@@ -1,4 +1,4 @@
-<div class="comments-section">
+<div class="comments-section" [attr.data-post-id]="postId">
   <!-- Botón para mostrar comentarios existentes -->
   <button class="view-comments-btn" (click)="toggleComments()" *ngIf="commentsCount > 0">
     {{ showComments ? 'Ocultar comentarios' : 'Ver los ' + commentsCount + ' comentario' + (commentsCount !== 1 ? 's' : '') }}
@@ -15,6 +15,7 @@
     [class.show]="showComments" 
     [class.has-scroll]="comments.length > 3"
     *ngIf="showComments && !loading"
+    #commentsContainer
   >
     <!-- Comentarios -->
     <div *ngFor="let comment of comments" class="comment-item">

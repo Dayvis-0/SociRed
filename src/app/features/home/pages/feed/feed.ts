@@ -47,6 +47,7 @@ export class Feed implements OnInit, OnDestroy {
   private userSubscription?: Subscription;
   private postsSubscription?: Subscription;
   private editingPostId: string | null = null;
+  private timeAgoInterval?: any;
 
   ngOnInit(): void {
     // Suscribirse al usuario actual
@@ -57,35 +58,69 @@ export class Feed implements OnInit, OnDestroy {
         this.loadPosts();
       }
     });
+
+    // Actualizar "timeAgo" cada minuto
+    this.timeAgoInterval = setInterval(() => {
+      this.updateTimeAgo();
+    }, 60000);
   }
 
   ngOnDestroy(): void {
     this.userSubscription?.unsubscribe();
     this.postsSubscription?.unsubscribe();
+    
+    if (this.timeAgoInterval) {
+      clearInterval(this.timeAgoInterval);
+    }
   }
 
   /**
-   * Cargar posts desde Firebase
+   * 🔥 Cargar posts en TIEMPO REAL desde Firebase
    */
   loadPosts(): void {
     this.loading = true;
     
+    if (this.postsSubscription) {
+      this.postsSubscription.unsubscribe();
+    }
+    
     this.postsSubscription = this.postService.getAllPosts(50).subscribe({
       next: (posts) => {
+        console.log('🔄 Posts actualizados en tiempo real desde feed.ts');
+        
+        // Mapear posts a PostUI
         this.posts = posts.map(post => ({
           ...post,
           timeAgo: this.getTimeAgo(post.fecha),
           isLikedByCurrentUser: this.currentUser ? 
             post.likedBy.includes(this.currentUser.userId) : false
         }));
+        
         this.loading = false;
-        console.log('✅ Posts cargados:', this.posts.length);
+        console.log('✅ Posts en el feed:', this.posts.length);
       },
       error: (error) => {
         console.error('❌ Error al cargar posts:', error);
         this.loading = false;
       }
     });
+  }
+
+  /**
+   * Actualizar el "timeAgo" de todos los posts
+   */
+  private updateTimeAgo(): void {
+    this.posts = this.posts.map(post => ({
+      ...post,
+      timeAgo: this.getTimeAgo(post.fecha)
+    }));
+  }
+
+  /**
+   * 🔑 TrackBy para evitar que Angular destruya los componentes
+   */
+  trackByPostId(index: number, post: PostUI): string {
+    return post.postId;
   }
 
   /**
@@ -128,9 +163,7 @@ export class Feed implements OnInit, OnDestroy {
         );
         console.log('✅ Post creado');
       }
-
-      // Recargar posts
-      this.loadPosts();
+      
     } catch (error) {
       console.error('❌ Error al publicar post:', error);
     }
@@ -146,9 +179,22 @@ export class Feed implements OnInit, OnDestroy {
     }
 
     try {
-      await this.postService.toggleLike(post.postId, this.currentUser.userId);
+      const wasLiked = post.isLikedByCurrentUser;
+      post.isLikedByCurrentUser = !wasLiked;
+      post.likes += post.isLikedByCurrentUser ? 1 : -1;
       
-      // Actualizar UI localmente
+      if (post.isLikedByCurrentUser) {
+        post.likedBy.push(this.currentUser.userId);
+      } else {
+        post.likedBy = post.likedBy.filter(id => id !== this.currentUser!.userId);
+      }
+
+      await this.postService.toggleLike(post.postId, this.currentUser.userId);
+      console.log('✅ Like actualizado');
+      
+    } catch (error) {
+      console.error('❌ Error al dar/quitar like:', error);
+      
       post.isLikedByCurrentUser = !post.isLikedByCurrentUser;
       post.likes += post.isLikedByCurrentUser ? 1 : -1;
       
@@ -157,8 +203,8 @@ export class Feed implements OnInit, OnDestroy {
       } else {
         post.likedBy = post.likedBy.filter(id => id !== this.currentUser!.userId);
       }
-    } catch (error) {
-      console.error('❌ Error al dar/quitar like:', error);
+      
+      alert('Error al dar like. Intenta nuevamente.');
     }
   }
 
@@ -166,7 +212,6 @@ export class Feed implements OnInit, OnDestroy {
    * Editar un post
    */
   onEdit(post: PostUI): void {
-    // Solo permitir editar si es el autor
     if (this.currentUser && post.autorId === this.currentUser.userId) {
       this.editingPostId = post.postId;
       this.createPostModal.open(post.contenido);
@@ -189,9 +234,9 @@ export class Feed implements OnInit, OnDestroy {
       try {
         await this.postService.deletePost(post.postId);
         console.log('✅ Post eliminado');
-        this.loadPosts();
       } catch (error) {
         console.error('❌ Error al eliminar post:', error);
+        alert('Error al eliminar el post. Intenta nuevamente.');
       }
     }
   }
@@ -219,11 +264,20 @@ export class Feed implements OnInit, OnDestroy {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
+    const diffWeeks = Math.floor(diffMs / 604800000);
+    const diffMonths = Math.floor(diffMs / 2592000000);
 
     if (diffMins < 1) return 'Justo ahora';
-    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
-    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-    if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+    if (diffMins === 1) return 'Hace 1 minuto';
+    if (diffMins < 60) return `Hace ${diffMins} minutos`;
+    if (diffHours === 1) return 'Hace 1 hora';
+    if (diffHours < 24) return `Hace ${diffHours} horas`;
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffWeeks === 1) return 'Hace 1 semana';
+    if (diffWeeks < 4) return `Hace ${diffWeeks} semanas`;
+    if (diffMonths === 1) return 'Hace 1 mes';
+    if (diffMonths < 12) return `Hace ${diffMonths} meses`;
     
     return postDate.toLocaleDateString('es-ES', { 
       day: 'numeric', 

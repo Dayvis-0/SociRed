@@ -25,6 +25,7 @@ import {
 import { Observable, from, of, BehaviorSubject, firstValueFrom } from 'rxjs';
 import { switchMap, map, catchError, tap, filter } from 'rxjs/operators';
 import { User, RegisterData, LoginData, CompleteProfileData } from '../models/user.model';
+import { PresenceService } from './presence.service'; // 🆕 IMPORTAR
 
 @Injectable({
   providedIn: 'root',
@@ -33,13 +34,14 @@ export class AuthService {
   private auth = inject(Auth);
   private firestore = inject(Firestore);
   private router = inject(Router);
+  private presenceService = inject(PresenceService); // 🆕 INYECTAR
 
   // BehaviorSubject para manejar el estado del usuario actual
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   // Estado de carga
-  private loadingSubject = new BehaviorSubject<boolean>(true); // Empieza en true
+  private loadingSubject = new BehaviorSubject<boolean>(true);
   public loading$ = this.loadingSubject.asObservable();
 
   // Estado de inicialización
@@ -56,6 +58,8 @@ export class AuthService {
       tap(() => this.loadingSubject.next(true)),
       switchMap(firebaseUser => {
         if (firebaseUser) {
+          // 🆕 MARCAR COMO ONLINE
+          this.presenceService.setUserOnline(firebaseUser.uid);
           return this.getUserData(firebaseUser.uid);
         } else {
           return of(null);
@@ -83,7 +87,6 @@ export class AuthService {
     try {
       this.loadingSubject.next(true);
 
-      // 1. Crear usuario en Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
         this.auth,
         data.email,
@@ -93,15 +96,12 @@ export class AuthService {
       const firebaseUser = userCredential.user;
       const displayName = `${data.firstName} ${data.lastName}`;
 
-      // 2. Actualizar perfil en Authentication
       await updateProfile(firebaseUser, { displayName });
 
-      // 3. Crear fecha de nacimiento
       const birthDate = Timestamp.fromDate(
         new Date(data.year, data.month - 1, data.day)
       );
       
-      // 4. Crear documento de usuario en Firestore (estructura completa)
       const userData: Omit<User, 'createdAt' | 'updatedAt'> = {
         userId: firebaseUser.uid,
         email: data.email,
@@ -111,19 +111,22 @@ export class AuthService {
         friendsCount: 0,
         postsCount: 0,
         birthDate: birthDate,
-        gender: data.gender
+        gender: data.gender,
+        isOnline: true, // 🆕
+        lastSeen: Timestamp.now() // 🆕
       };
 
       await this.createUserDocument(firebaseUser.uid, userData);
       
-      // 5. Obtener el usuario completo con timestamps
+      // 🆕 MARCAR COMO ONLINE
+      await this.presenceService.setUserOnline(firebaseUser.uid);
+      
       const completeUser = await firstValueFrom(this.getUserData(firebaseUser.uid));
       
       if (completeUser) {
         this.currentUserSubject.next(completeUser);
       }
       
-      // 6. Redirigir al feed
       await this.router.navigate(['/feed']);
       
     } catch (error: any) {
@@ -144,6 +147,9 @@ export class AuthService {
         data.email,
         data.password
       );
+
+      // 🆕 MARCAR COMO ONLINE
+      await this.presenceService.setUserOnline(userCredential.user.uid);
 
       const userData = await firstValueFrom(
         this.getUserData(userCredential.user.uid)
@@ -175,15 +181,15 @@ export class AuthService {
       const userCredential = await signInWithPopup(this.auth, provider);
       const firebaseUser = userCredential.user;
 
-      // Verificar si el usuario ya existe en Firestore
       const userDocRef = doc(this.firestore, 'users', firebaseUser.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        // Usuario nuevo - redirigir a completar perfil
         await this.router.navigate(['/auth/complete-profile']);
       } else {
-        // Usuario existente - ir al feed
+        // 🆕 MARCAR COMO ONLINE
+        await this.presenceService.setUserOnline(firebaseUser.uid);
+        
         const userData = await firstValueFrom(this.getUserData(firebaseUser.uid));
         
         if (userData) {
@@ -201,58 +207,67 @@ export class AuthService {
   }
 
   // ==================== COMPLETAR PERFIL (GOOGLE) ====================
-    async completeProfile(data: CompleteProfileData): Promise<void> {
-      const firebaseUser = this.auth.currentUser;
-      
-      if (!firebaseUser) {
-        throw new Error('No hay usuario autenticado');
-      }
-
-      try {
-        this.loadingSubject.next(true);
-
-        // Usar el displayName que viene en data, o el de Firebase Auth como fallback
-        const displayName = data.displayName || firebaseUser.displayName || 'Usuario';
-
-        // Crear documento de usuario en Firestore con estructura completa
-        const userData: any = {
-          userId: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          displayName: displayName,
-          photoURL: data.photoURL || firebaseUser.photoURL || 
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`,
-          bio: data.bio || '',
-          friendsCount: 0,
-          postsCount: 0
-        };
-
-        // Solo agregar campos opcionales si tienen valor
-        if (data.coverPhotoURL) userData.coverPhotoURL = data.coverPhotoURL;
-        if (data.website) userData.website = data.website;
-        if (data.location) userData.location = data.location;
-        if (data.occupation) userData.occupation = data.occupation;
-
-        await this.createUserDocument(firebaseUser.uid, userData);
-        
-        const completeUser = await firstValueFrom(this.getUserData(firebaseUser.uid));
-        
-        if (completeUser) {
-          this.currentUserSubject.next(completeUser);
-        }
-
-        await this.router.navigate(['/feed']);
-
-      } catch (error: any) {
-        console.error('Error al completar perfil:', error);
-        throw error;
-      } finally {
-        this.loadingSubject.next(false);
-      }
+  async completeProfile(data: CompleteProfileData): Promise<void> {
+    const firebaseUser = this.auth.currentUser;
+    
+    if (!firebaseUser) {
+      throw new Error('No hay usuario autenticado');
     }
+
+    try {
+      this.loadingSubject.next(true);
+
+      const displayName = data.displayName || firebaseUser.displayName || 'Usuario';
+
+      const userData: any = {
+        userId: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        displayName: displayName,
+        photoURL: data.photoURL || firebaseUser.photoURL || 
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`,
+        bio: data.bio || '',
+        friendsCount: 0,
+        postsCount: 0,
+        isOnline: true, // 🆕
+        lastSeen: Timestamp.now() // 🆕
+      };
+
+      if (data.coverPhotoURL) userData.coverPhotoURL = data.coverPhotoURL;
+      if (data.website) userData.website = data.website;
+      if (data.location) userData.location = data.location;
+      if (data.occupation) userData.occupation = data.occupation;
+
+      await this.createUserDocument(firebaseUser.uid, userData);
+      
+      // 🆕 MARCAR COMO ONLINE
+      await this.presenceService.setUserOnline(firebaseUser.uid);
+      
+      const completeUser = await firstValueFrom(this.getUserData(firebaseUser.uid));
+      
+      if (completeUser) {
+        this.currentUserSubject.next(completeUser);
+      }
+
+      await this.router.navigate(['/feed']);
+
+    } catch (error: any) {
+      console.error('Error al completar perfil:', error);
+      throw error;
+    } finally {
+      this.loadingSubject.next(false);
+    }
+  }
 
   // ==================== LOGOUT ====================
   async logout(): Promise<void> {
     try {
+      const userId = this.auth.currentUser?.uid;
+      
+      // 🆕 MARCAR COMO OFFLINE ANTES DE CERRAR SESIÓN
+      if (userId) {
+        await this.presenceService.setUserOffline(userId);
+      }
+      
       await signOut(this.auth);
       this.currentUserSubject.next(null);
       await this.router.navigate(['/auth/login']);
@@ -267,14 +282,12 @@ export class AuthService {
     this.loadingSubject.next(true);
     
     try {
-      // Primero verificar si el usuario existe
       const methods = await fetchSignInMethodsForEmail(this.auth, email);
       
       if (methods.length === 0) {
         throw { code: 'auth/user-not-found' };
       }
       
-      // Si existe, enviar el correo de recuperación
       await sendPasswordResetEmail(this.auth, email);
     } catch (error) {
       throw error;
@@ -292,7 +305,6 @@ export class AuthService {
         if (docSnap.exists()) {
           const data = docSnap.data();
           
-          // Convertir Timestamps y asegurar estructura completa
           return {
             userId: data['userId'] || userId,
             email: data['email'] || '',
@@ -307,6 +319,8 @@ export class AuthService {
             birthDate: data['birthDate'] ? this.convertToTimestamp(data['birthDate']) : undefined,
             occupation: data['occupation'],
             gender: data['gender'],
+            isOnline: data['isOnline'] || false, // 🆕
+            lastSeen: data['lastSeen'] ? this.convertToTimestamp(data['lastSeen']) : undefined, // 🆕
             createdAt: this.convertToTimestamp(data['createdAt']),
             updatedAt: this.convertToTimestamp(data['updatedAt'])
           } as User;
@@ -339,7 +353,6 @@ export class AuthService {
     try {
       const userDocRef = doc(this.firestore, 'users', userId);
       
-      // Remover campos que no se deben actualizar
       const { createdAt, userId: _, ...updateData } = updates as any;
       
       await updateDoc(userDocRef, {
@@ -347,7 +360,6 @@ export class AuthService {
         updatedAt: serverTimestamp()
       });
 
-      // Actualizar el usuario actual en el BehaviorSubject
       const updatedUser = await firstValueFrom(this.getUserData(userId));
       
       if (updatedUser) {

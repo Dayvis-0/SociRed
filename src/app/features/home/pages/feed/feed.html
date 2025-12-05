@@ -23,8 +23,8 @@
       <p>Cargando publicaciones...</p>
     </div>
 
-    <!-- POSTS -->
-    <article *ngFor="let post of posts" class="post">
+    <!-- POSTS - 🔑 AGREGADO trackBy -->
+    <article *ngFor="let post of posts; trackBy: trackByPostId" class="post">
       <div class="post-header">
         <div class="post-avatar" [style.background-image]="post.autorPhotoURL ? 'url(' + post.autorPhotoURL + ')' : 'none'">
           <span *ngIf="!post.autorPhotoURL">{{ post.autorInitials }}</span>

@@ -7,12 +7,13 @@ import { User } from '../../../core/models/user.model';
 import { getRandomGradient } from '../../../core/models/suggestion.model';
 import { Subscription } from 'rxjs';
 
-interface OnlineUser {
+interface FriendDisplay {
   userId: string;
   initials: string;
   name: string;
   photoURL?: string;
   gradient: string;
+  isOnline: boolean; // 🆕
 }
 
 @Component({
@@ -35,8 +36,8 @@ export class SidebarRight implements OnInit, OnDestroy {
   friendsCount: number = 0;
   postsCount: number = 0;
   
-  onlineUsers: OnlineUser[] = [];
-  loadingOnlineUsers: boolean = true;
+  friends: FriendDisplay[] = [];
+  loadingFriends: boolean = true;
 
   private userSubscription?: Subscription;
   private friendsSubscription?: Subscription;
@@ -52,7 +53,7 @@ export class SidebarRight implements OnInit, OnDestroy {
         this.friendsCount = user.friendsCount || 0;
         this.postsCount = user.postsCount || 0;
         
-        // Cargar solo amigos conectados
+        // Cargar amigos ONLINE
         this.loadOnlineFriends(user.userId);
       }
     });
@@ -64,74 +65,47 @@ export class SidebarRight implements OnInit, OnDestroy {
   }
 
   /**
-   * Cargar SOLO amigos conectados (no sugerencias)
+   * 🟢 Cargar SOLO amigos que están ONLINE
    */
   loadOnlineFriends(userId: string): void {
-    this.loadingOnlineUsers = true;
+    this.loadingFriends = true;
 
     this.friendsSubscription = this.friendService.getFriends(userId).subscribe({
       next: (friends) => {
-        console.log('👥 Amigos encontrados:', friends.length);
+        console.log('👥 Amigos totales:', friends.length);
         
-        if (friends.length > 0) {
-          // Tomar máximo 5 amigos aleatorios
-          const randomFriends = this.shuffleArray(friends).slice(0, 5);
+        // 🟢 FILTRAR SOLO AMIGOS ONLINE
+        const onlineFriends = friends.filter(friend => friend.isOnline === true);
+        
+        console.log('🟢 Amigos ONLINE:', onlineFriends.length);
+        
+        if (onlineFriends.length > 0) {
+          // Mostrar máximo 8 amigos online
+          const limitedFriends = onlineFriends.slice(0, 8);
           
-          this.onlineUsers = randomFriends.map(friend => ({
+          this.friends = limitedFriends.map(friend => ({
             userId: friend.userId,
             initials: this.getInitials(friend.displayName),
             name: friend.displayName,
             photoURL: friend.photoURL,
-            gradient: getRandomGradient()
+            gradient: getRandomGradient(),
+            isOnline: true
           }));
           
-          console.log('✅ Amigos conectados mostrados:', this.onlineUsers.length);
+          console.log('✅ Amigos online mostrados:', this.friends.length);
         } else {
-          // NO mostrar sugerencias, dejar vacío
-          this.onlineUsers = [];
-          console.log('ℹ️ No hay amigos para mostrar');
+          this.friends = [];
+          console.log('ℹ️ No hay amigos online');
         }
         
-        this.loadingOnlineUsers = false;
+        this.loadingFriends = false;
       },
       error: (error) => {
         console.error('❌ Error al cargar amigos:', error);
-        this.onlineUsers = [];
-        this.loadingOnlineUsers = false;
+        this.friends = [];
+        this.loadingFriends = false;
       }
     });
-  }
-
-  /**
-   * Navegar al perfil de un usuario
-   */
-  navigateToProfile(userId: string): void {
-    // Buscar el nombre del usuario en la lista
-    const user = this.onlineUsers.find(u => u.userId === userId);
-    
-    if (user) {
-      const userName = user.name;
-      console.log('🔗 Navegando al perfil de:', userName);
-      
-      this.router.navigate(['/profile', userName]).then(
-        success => console.log('✅ Navegación exitosa:', success),
-        error => console.error('❌ Error en navegación:', error)
-      );
-    } else {
-      console.error('❌ Usuario no encontrado en la lista');
-    }
-  }
-
-  /**
-   * Mezclar array aleatoriamente (Fisher-Yates shuffle)
-   */
-  private shuffleArray<T>(array: T[]): T[] {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
   }
 
   /**

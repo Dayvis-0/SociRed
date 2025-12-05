@@ -21,46 +21,48 @@
     </div>
   </div>
 
-  <!-- ONLINE USERS CARD -->
+  <!-- ONLINE FRIENDS CARD -->
   <div class="suggestions-card">
     <div class="suggestions-title">
-      {{ onlineUsers.length > 0 ? 'Amigos Conectados' : 'Cargando...' }}
+      {{ friends.length > 0 ? 'Amigos Conectados' : 'Cargando...' }}
     </div>
     
     <!-- Loading State -->
-    <div *ngIf="loadingOnlineUsers" class="loading-state">
+    <div *ngIf="loadingFriends" class="loading-state">
       <div class="mini-spinner"></div>
       <p>Cargando amigos...</p>
     </div>
 
-    <!-- Online Users List -->
-    <div *ngIf="!loadingOnlineUsers && onlineUsers.length > 0">
+    <!-- Online Friends List -->
+    <div *ngIf="!loadingFriends && friends.length > 0">
       <a 
-        *ngFor="let user of onlineUsers" 
-        [routerLink]="['/profile', user.userId]"
+        *ngFor="let friend of friends" 
+        [routerLink]="['/profile', friend.userId]"
         class="suggestion-item"
       >
-        <div class="online-avatar-container">
+        <div class="suggestion-avatar-wrapper">
           <div 
             class="suggestion-avatar"
-            [style.background]="user.photoURL ? 'none' : user.gradient"
-            [style.background-image]="user.photoURL ? 'url(' + user.photoURL + ')' : 'none'"
+            [style.background]="friend.photoURL ? 'none' : friend.gradient"
+            [style.background-image]="friend.photoURL ? 'url(' + friend.photoURL + ')' : 'none'"
           >
-            <span *ngIf="!user.photoURL">{{ user.initials }}</span>
+            <span *ngIf="!friend.photoURL">{{ friend.initials }}</span>
           </div>
-          <span class="online-indicator"></span>
+          <!-- 🟢 INDICADOR ONLINE -->
+          <span class="online-indicator" *ngIf="friend.isOnline"></span>
         </div>
         <div class="suggestion-info">
-          <div class="suggestion-name">{{ user.name }}</div>
-          <div class="suggestion-mutual">Conectado ahora</div>
+          <div class="suggestion-name">{{ friend.name }}</div>
+          <div class="suggestion-mutual online-text">● Conectado</div>
         </div>
       </a>
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!loadingOnlineUsers && onlineUsers.length === 0" class="empty-online">
-      <p>👥</p>
-      <span>No hay amigos conectados</span>
+    <div *ngIf="!loadingFriends && friends.length === 0" class="empty-online">
+      <p>💤</p>
+      <span>Ningún amigo conectado</span>
+      <a routerLink="/friends" class="add-friends-link">Ver todos los amigos</a>
     </div>
   </div>
 </aside>

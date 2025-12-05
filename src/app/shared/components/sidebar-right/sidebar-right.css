@@ -81,6 +81,7 @@
   text-align: center;
   cursor: pointer;
   transition: transform 0.2s;
+  text-decoration: none;
 }
 
 .profile-stat:hover {
@@ -99,7 +100,7 @@
   margin-top: 4px;
 }
 
-/* --- USUARIOS CONECTADOS --- */
+/* --- ONLINE FRIENDS CARD --- */
 .suggestions-card {
   background: var(--surface-color);
   border-radius: 8px;
@@ -123,6 +124,7 @@
   border-radius: 8px;
   transition: background 0.2s;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .suggestion-item:hover {
@@ -133,8 +135,10 @@
   margin-bottom: 0;
 }
 
-.online-avatar-container {
+/* 🆕 CONTENEDOR DEL AVATAR CON INDICADOR */
+.suggestion-avatar-wrapper {
   position: relative;
+  flex-shrink: 0;
 }
 
 .suggestion-avatar {
@@ -148,7 +152,6 @@
   justify-content: center;
   color: var(--surface-color);
   font-weight: 600;
-  flex-shrink: 0;
   overflow: hidden;
 }
 
@@ -156,26 +159,26 @@
   z-index: 1;
 }
 
+/* 🟢 INDICADOR ONLINE */
 .online-indicator {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: 2px;
+  right: 2px;
   width: 12px;
   height: 12px;
-  background: var(--online-color);
+  background: #31a24c;
   border: 2px solid var(--surface-color);
   border-radius: 50%;
+  z-index: 2;
   animation: pulse-online 2s ease-in-out infinite;
 }
 
 @keyframes pulse-online {
   0%, 100% {
-    opacity: 1;
-    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(49, 162, 76, 0.7);
   }
   50% {
-    opacity: 0.8;
-    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(49, 162, 76, 0);
   }
 }
 
@@ -196,6 +199,12 @@
 .suggestion-mutual {
   font-size: 13px;
   color: var(--secondary-text-color);
+}
+
+/* 🟢 TEXTO "CONECTADO" */
+.online-text {
+  color: #31a24c;
+  font-weight: 500;
 }
 
 /* --- LOADING STATE --- */
@@ -247,6 +256,24 @@
 .empty-online span {
   font-size: 14px;
   color: var(--secondary-text-color);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.add-friends-link {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--primary-action-color);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.add-friends-link:hover {
+  background: #166fe5;
 }
 
 /* --- RESPONSIVE --- */

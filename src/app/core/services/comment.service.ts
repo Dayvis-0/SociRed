@@ -6,19 +6,21 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
   query,
   where,
   orderBy,
   limit,
-  getDocs,
   serverTimestamp,
   Timestamp,
   increment,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  onSnapshot,
+  QuerySnapshot,
+  DocumentData
 } from '@angular/fire/firestore';
-import { Observable, from } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Comment } from '../models/comment.model';
 
 @Injectable({
@@ -27,48 +29,57 @@ import { Comment } from '../models/comment.model';
 export class CommentService {
   private firestore = inject(Firestore);
 
-  /**
-   * Obtener comentarios de un post
-   */
+  // ==================== OBTENER COMENTARIOS DE UN POST (TIEMPO REAL) ====================
   getCommentsByPost(postId: string, limitCount: number = 50): Observable<Comment[]> {
-    const commentsCollection = collection(this.firestore, `posts/${postId}/comentarios`);
-    const q = query(
-      commentsCollection,
-      where('parentCommentId', '==', null),
-      orderBy('createdAt', 'asc'),
-      limit(limitCount)
-    );
+    return new Observable(observer => {
+      const commentsCollection = collection(this.firestore, `posts/${postId}/comentarios`);
+      const q = query(
+        commentsCollection,
+        where('parentCommentId', '==', null),
+        orderBy('createdAt', 'asc'),
+        limit(limitCount)
+      );
 
-    return from(getDocs(q)).pipe(
-      map(snapshot => {
-        return snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            comentarioId: doc.id,
-            postId: data['postId'] || postId,
-            autorId: data['autorId'],
-            autorName: data['autorName'],
-            autorPhotoURL: data['autorPhotoURL'],
-            texto: data['texto'],
-            likes: data['likes'] || 0,
-            likedBy: data['likedBy'] || [],
-            fecha: this.convertToTimestamp(data['fecha']),
-            createdAt: this.convertToTimestamp(data['createdAt']),
-            updatedAt: this.convertToTimestamp(data['updatedAt']),
-            parentCommentId: data['parentCommentId']
-          } as Comment;
-        });
-      }),
-      catchError(error => {
-        console.error('❌ Error al obtener comentarios:', error);
-        throw error;
-      })
-    );
+      // 🔥 onSnapshot escucha cambios en TIEMPO REAL
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot: QuerySnapshot<DocumentData>) => {
+          const comments = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              comentarioId: doc.id,
+              postId: data['postId'] || postId,
+              autorId: data['autorId'],
+              autorName: data['autorName'],
+              autorPhotoURL: data['autorPhotoURL'],
+              texto: data['texto'],
+              likes: data['likes'] || 0,
+              likedBy: data['likedBy'] || [],
+              fecha: this.convertToTimestamp(data['fecha']),
+              createdAt: this.convertToTimestamp(data['createdAt']),
+              updatedAt: this.convertToTimestamp(data['updatedAt']),
+              parentCommentId: data['parentCommentId']
+            } as Comment;
+          });
+
+          console.log(`🔄 Comentarios del post ${postId} actualizados:`, comments.length);
+          observer.next(comments);
+        },
+        error => {
+          console.error('❌ Error al escuchar comentarios:', error);
+          observer.error(error);
+        }
+      );
+
+      // Cleanup: desuscribirse cuando el Observable se cancele
+      return () => {
+        console.log(`🛑 Desuscrito de comentarios del post ${postId}`);
+        unsubscribe();
+      };
+    });
   }
 
-  /**
-   * Crear un comentario
-   */
+  // ==================== CREAR UN COMENTARIO ====================
   async createComment(
     postId: string,
     autorId: string,
@@ -110,34 +121,36 @@ export class CommentService {
     }
   }
 
-  /**
-   * Dar/quitar like a un comentario
-   */
+  // ==================== DAR/QUITAR LIKE A UN COMENTARIO ====================
   async toggleLike(postId: string, comentarioId: string, userId: string): Promise<void> {
     try {
       const commentRef = doc(this.firestore, `posts/${postId}/comentarios`, comentarioId);
-      const commentDoc = await getDocs(query(collection(this.firestore, `posts/${postId}/comentarios`), where('__name__', '==', comentarioId)));
+      const commentSnap = await getDoc(commentRef);
       
-      if (!commentDoc.empty) {
-        const commentData = commentDoc.docs[0].data();
-        const likedBy = commentData['likedBy'] || [];
-        const hasLiked = likedBy.includes(userId);
+      if (!commentSnap.exists()) {
+        throw new Error('Comentario no encontrado');
+      }
 
-        if (hasLiked) {
-          // Quitar like
-          await updateDoc(commentRef, {
-            likes: increment(-1),
-            likedBy: arrayRemove(userId)
-          });
-        } else {
-          // Dar like
-          await updateDoc(commentRef, {
-            likes: increment(1),
-            likedBy: arrayUnion(userId)
-          });
-        }
+      const commentData = commentSnap.data();
+      const likedBy = commentData['likedBy'] || [];
+      const hasLiked = likedBy.includes(userId);
 
-        console.log('✅ Like actualizado en comentario');
+      if (hasLiked) {
+        // Quitar like
+        await updateDoc(commentRef, {
+          likes: increment(-1),
+          likedBy: arrayRemove(userId),
+          updatedAt: serverTimestamp()
+        });
+        console.log('👎 Like removido del comentario:', comentarioId);
+      } else {
+        // Dar like
+        await updateDoc(commentRef, {
+          likes: increment(1),
+          likedBy: arrayUnion(userId),
+          updatedAt: serverTimestamp()
+        });
+        console.log('👍 Like agregado al comentario:', comentarioId);
       }
     } catch (error) {
       console.error('❌ Error al actualizar like:', error);
@@ -145,9 +158,7 @@ export class CommentService {
     }
   }
 
-  /**
-   * Actualizar un comentario
-   */
+  // ==================== ACTUALIZAR UN COMENTARIO ====================
   async updateComment(postId: string, comentarioId: string, texto: string): Promise<void> {
     try {
       const commentRef = doc(this.firestore, `posts/${postId}/comentarios`, comentarioId);
@@ -156,16 +167,14 @@ export class CommentService {
         updatedAt: serverTimestamp()
       });
 
-      console.log('✅ Comentario actualizado');
+      console.log('✅ Comentario actualizado:', comentarioId);
     } catch (error) {
       console.error('❌ Error al actualizar comentario:', error);
       throw error;
     }
   }
 
-  /**
-   * Eliminar un comentario
-   */
+  // ==================== ELIMINAR UN COMENTARIO ====================
   async deleteComment(postId: string, comentarioId: string): Promise<void> {
     try {
       const commentRef = doc(this.firestore, `posts/${postId}/comentarios`, comentarioId);
@@ -177,54 +186,86 @@ export class CommentService {
         commentsCount: increment(-1)
       });
 
-      console.log('✅ Comentario eliminado');
+      console.log('✅ Comentario eliminado:', comentarioId);
     } catch (error) {
       console.error('❌ Error al eliminar comentario:', error);
       throw error;
     }
   }
 
-  /**
-   * Obtener respuestas de un comentario
-   */
+  // ==================== OBTENER RESPUESTAS DE UN COMENTARIO (TIEMPO REAL) ====================
   getCommentReplies(postId: string, parentCommentId: string): Observable<Comment[]> {
-    const commentsCollection = collection(this.firestore, `posts/${postId}/comentarios`);
-    const q = query(
-      commentsCollection,
-      where('parentCommentId', '==', parentCommentId),
-      orderBy('createdAt', 'asc')
-    );
+    return new Observable(observer => {
+      const commentsCollection = collection(this.firestore, `posts/${postId}/comentarios`);
+      const q = query(
+        commentsCollection,
+        where('parentCommentId', '==', parentCommentId),
+        orderBy('createdAt', 'asc')
+      );
 
-    return from(getDocs(q)).pipe(
-      map(snapshot => {
-        return snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            comentarioId: doc.id,
-            postId: data['postId'] || postId,
-            autorId: data['autorId'],
-            autorName: data['autorName'],
-            autorPhotoURL: data['autorPhotoURL'],
-            texto: data['texto'],
-            likes: data['likes'] || 0,
-            likedBy: data['likedBy'] || [],
-            fecha: this.convertToTimestamp(data['fecha']),
-            createdAt: this.convertToTimestamp(data['createdAt']),
-            updatedAt: this.convertToTimestamp(data['updatedAt']),
-            parentCommentId: data['parentCommentId']
-          } as Comment;
-        });
-      }),
-      catchError(error => {
-        console.error('❌ Error al obtener respuestas:', error);
-        throw error;
-      })
-    );
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot: QuerySnapshot<DocumentData>) => {
+          const replies = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              comentarioId: doc.id,
+              postId: data['postId'] || postId,
+              autorId: data['autorId'],
+              autorName: data['autorName'],
+              autorPhotoURL: data['autorPhotoURL'],
+              texto: data['texto'],
+              likes: data['likes'] || 0,
+              likedBy: data['likedBy'] || [],
+              fecha: this.convertToTimestamp(data['fecha']),
+              createdAt: this.convertToTimestamp(data['createdAt']),
+              updatedAt: this.convertToTimestamp(data['updatedAt']),
+              parentCommentId: data['parentCommentId']
+            } as Comment;
+          });
+
+          console.log(`🔄 Respuestas del comentario ${parentCommentId} actualizadas:`, replies.length);
+          observer.next(replies);
+        },
+        error => {
+          console.error('❌ Error al escuchar respuestas:', error);
+          observer.error(error);
+        }
+      );
+
+      return () => {
+        console.log(`🛑 Desuscrito de respuestas del comentario ${parentCommentId}`);
+        unsubscribe();
+      };
+    });
   }
 
-  /**
-   * Helper: Convertir a Timestamp
-   */
+  // ==================== CONTAR COMENTARIOS DE UN POST ====================
+  async getCommentsCount(postId: string): Promise<number> {
+    try {
+      const commentsCollection = collection(this.firestore, `posts/${postId}/comentarios`);
+      const q = query(commentsCollection, where('parentCommentId', '==', null));
+      
+      return new Promise((resolve, reject) => {
+        const unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            unsubscribe();
+            resolve(snapshot.size);
+          },
+          (error) => {
+            unsubscribe();
+            reject(error);
+          }
+        );
+      });
+    } catch (error) {
+      console.error('❌ Error al contar comentarios:', error);
+      return 0;
+    }
+  }
+
+  // ==================== HELPER: CONVERTIR A TIMESTAMP ====================
   private convertToTimestamp(value: any): Timestamp {
     if (!value) return Timestamp.now();
     if (value instanceof Timestamp) return value;

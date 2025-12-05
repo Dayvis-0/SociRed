@@ -5,28 +5,31 @@ import { Timestamp } from '@angular/fire/firestore';
  * Ruta: /users/{userId}
  */
 export interface User {
-  userId: string;                    // UID de Firebase Auth
+  userId: string;
   email: string;
   displayName: string;
-  photoURL?: string;                 // URL de la imagen de perfil
+  photoURL?: string;
   bio?: string;
-  coverPhotoURL?: string;            // URL de la foto de portada
-  createdAt: Timestamp;              // Fecha de creación
-  updatedAt: Timestamp;              // Fecha de última actualización
-  friendsCount: number;              // Contador de amigos
-  postsCount: number;                // Contador de publicaciones
+  coverPhotoURL?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  friendsCount: number;
+  postsCount: number;
+  
+  // 🆕 CAMPOS DE PRESENCIA ONLINE
+  isOnline?: boolean;                // Si el usuario está conectado
+  lastSeen?: Timestamp;              // Última vez que estuvo activo
   
   // Campos adicionales opcionales
-  website?: string;                  // Sitio web personal
-  location?: string;                 // Ubicación del usuario
-  birthDate?: Timestamp;             // Fecha de nacimiento
-  occupation?: string;               // Ocupación o profesión
-  gender?: 'male' | 'female' | 'custom'; // Género
+  website?: string;
+  location?: string;
+  birthDate?: Timestamp;
+  occupation?: string;
+  gender?: 'male' | 'female' | 'custom';
 }
 
 /**
  * Interface para Registro de Usuario
- * Datos necesarios para crear una cuenta
  */
 export interface RegisterData {
   firstName: string;
@@ -41,7 +44,6 @@ export interface RegisterData {
 
 /**
  * Interface para Login de Usuario
- * Datos necesarios para iniciar sesión
  */
 export interface LoginData {
   email: string;
@@ -50,10 +52,9 @@ export interface LoginData {
 
 /**
  * Interface para Completar Perfil
- * Datos adicionales después del registro con Google
  */
 export interface CompleteProfileData {
-  displayName?: string;              // Nombre completo del usuario
+  displayName?: string;
   bio?: string;
   website?: string;
   location?: string;
@@ -64,7 +65,6 @@ export interface CompleteProfileData {
 
 /**
  * Interface para Actualizar Perfil
- * Datos que se pueden modificar en el perfil
  */
 export interface UpdateProfileData {
   displayName?: string;
@@ -80,7 +80,6 @@ export interface UpdateProfileData {
 
 /**
  * Interface para Usuario Público
- * Información básica que se muestra en posts, comentarios, etc.
  */
 export interface PublicUserInfo {
   userId: string;
@@ -88,21 +87,21 @@ export interface PublicUserInfo {
   photoURL?: string;
   bio?: string;
   occupation?: string;
+  isOnline?: boolean;              // 🆕
+  lastSeen?: Timestamp;            // 🆕
 }
 
 /**
  * Interface para Perfil de Usuario (vista completa)
- * Información detallada para la página de perfil
  */
 export interface UserProfile extends User {
-  isFriend?: boolean;                // Si es amigo del usuario actual
+  isFriend?: boolean;
   friendshipStatus?: 'none' | 'pending' | 'accepted' | 'rejected';
-  mutualFriendsCount?: number;       // Amigos en común
+  mutualFriendsCount?: number;
 }
 
 /**
  * Interface para Usuario Simple (listas, búsquedas)
- * Versión simplificada para listados
  */
 export interface UserSimple {
   userId: string;
@@ -110,6 +109,8 @@ export interface UserSimple {
   photoURL?: string;
   occupation?: string;
   friendsCount: number;
+  isOnline?: boolean;              // 🆕
+  lastSeen?: Timestamp;            // 🆕
 }
 
 /**
@@ -135,7 +136,9 @@ export function toPublicUserInfo(user: User): PublicUserInfo {
     displayName: user.displayName,
     photoURL: user.photoURL,
     bio: user.bio,
-    occupation: user.occupation
+    occupation: user.occupation,
+    isOnline: user.isOnline,
+    lastSeen: user.lastSeen
   };
 }
 
@@ -160,6 +163,7 @@ export function createEmptyUser(userId: string, email: string): Partial<User> {
     displayName: '',
     friendsCount: 0,
     postsCount: 0,
+    isOnline: false,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
   };

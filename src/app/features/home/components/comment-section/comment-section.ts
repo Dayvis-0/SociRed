@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CommentService } from '../../../../core/services/comment.service';
@@ -22,6 +22,8 @@ export class CommentSection implements OnInit, OnDestroy {
   @Input() postId!: string;
   @Input() commentsCount: number = 0;
   
+  @ViewChild('commentsContainer') commentsContainer?: ElementRef;
+  
   showComments = false;
   newCommentText = '';
   currentUser: User | null = null;
@@ -32,6 +34,8 @@ export class CommentSection implements OnInit, OnDestroy {
   
   private userSubscription?: Subscription;
   private commentsSubscription?: Subscription;
+  private timeAgoInterval?: any;
+  private shouldScrollToBottom: boolean = false; // 🆕 Bandera para saber si TÚ comentaste
 
   ngOnInit(): void {
     // Suscribirse al usuario actual
@@ -41,11 +45,30 @@ export class CommentSection implements OnInit, OnDestroy {
         this.currentUserInitials = this.getInitials(user.displayName);
       }
     });
+
+    // Actualizar "timeAgo" cada minuto
+    this.timeAgoInterval = setInterval(() => {
+      this.updateTimeAgo();
+    }, 60000);
   }
 
   ngOnDestroy(): void {
     this.userSubscription?.unsubscribe();
     this.commentsSubscription?.unsubscribe();
+    
+    if (this.timeAgoInterval) {
+      clearInterval(this.timeAgoInterval);
+    }
+  }
+
+  /**
+   * Actualizar el "timeAgo" de todos los comentarios
+   */
+  private updateTimeAgo(): void {
+    this.comments = this.comments.map(comment => ({
+      ...comment,
+      timeAgo: this.getTimeAgo(comment.fecha)
+    }));
   }
 
   /**
@@ -54,19 +77,23 @@ export class CommentSection implements OnInit, OnDestroy {
   toggleComments(): void {
     this.showComments = !this.showComments;
     
-    if (this.showComments && this.comments.length === 0) {
+    // Solo cargar si se está expandiendo Y no hay comentarios cargados
+    if (this.showComments && !this.commentsSubscription) {
       this.loadComments();
     }
   }
 
   /**
-   * Cargar comentarios desde Firebase
+   * Cargar comentarios en TIEMPO REAL desde Firebase
    */
   loadComments(): void {
     this.loading = true;
     
+    // El listener en tiempo real se mantiene activo
     this.commentsSubscription = this.commentService.getCommentsByPost(this.postId, 100).subscribe({
       next: (comments) => {
+        const oldCount = this.comments.length;
+        
         this.comments = comments.map(comment => ({
           ...comment,
           timeAgo: this.getTimeAgo(comment.fecha),
@@ -76,13 +103,37 @@ export class CommentSection implements OnInit, OnDestroy {
         }));
         
         this.loading = false;
-        console.log('✅ Comentarios cargados:', this.comments.length);
+        console.log('🔄 Comentarios actualizados en tiempo real:', this.comments.length);
+        
+        // ✅ SOLO hacer scroll si TÚ comentaste (shouldScrollToBottom = true)
+        if (this.shouldScrollToBottom && this.comments.length > oldCount) {
+          this.scrollToBottom();
+          this.shouldScrollToBottom = false; // Resetear la bandera
+          console.log('📜 Scroll automático porque TÚ comentaste');
+        } else if (this.comments.length > oldCount) {
+          console.log('ℹ️ Nuevo comentario de otro usuario - NO se hace scroll');
+        }
       },
       error: (error) => {
         console.error('❌ Error al cargar comentarios:', error);
         this.loading = false;
       }
     });
+  }
+
+  /**
+   * Hacer scroll automático hacia el último comentario
+   */
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      const container = document.querySelector(`[data-post-id="${this.postId}"] .comments-container`) as HTMLElement;
+      if (container) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   }
 
   /**
@@ -95,10 +146,9 @@ export class CommentSection implements OnInit, OnDestroy {
     }
 
     try {
-      await this.commentService.toggleLike(this.postId, comment.comentarioId, this.currentUser.userId);
-      
-      // Actualizar UI localmente
-      comment.isLikedByCurrentUser = !comment.isLikedByCurrentUser;
+      // Actualización optimista
+      const wasLiked = comment.isLikedByCurrentUser;
+      comment.isLikedByCurrentUser = !wasLiked;
       comment.likes += comment.isLikedByCurrentUser ? 1 : -1;
       
       if (comment.isLikedByCurrentUser) {
@@ -106,13 +156,22 @@ export class CommentSection implements OnInit, OnDestroy {
       } else {
         comment.likedBy = comment.likedBy.filter(id => id !== this.currentUser!.userId);
       }
+
+      // Enviar a Firebase
+      await this.commentService.toggleLike(this.postId, comment.comentarioId, this.currentUser.userId);
+      
+      console.log('✅ Like actualizado en comentario');
     } catch (error) {
       console.error('❌ Error al dar/quitar like:', error);
+      
+      // Revertir en caso de error
+      comment.isLikedByCurrentUser = !comment.isLikedByCurrentUser;
+      comment.likes += comment.isLikedByCurrentUser ? 1 : -1;
     }
   }
 
   /**
-   * Agregar un comentario
+   * ✅ Agregar un comentario (SOLO hace scroll cuando TÚ comentas)
    */
   async addComment(): Promise<void> {
     if (!this.currentUser) {
@@ -122,6 +181,21 @@ export class CommentSection implements OnInit, OnDestroy {
 
     if (this.newCommentText.trim()) {
       try {
+        // Si los comentarios están ocultos, mostrarlos primero
+        if (!this.showComments) {
+          this.showComments = true;
+          
+          // Si no hay suscripción activa, iniciar el listener
+          if (!this.commentsSubscription) {
+            this.loadComments();
+          }
+        }
+
+        // 🔑 ACTIVAR la bandera ANTES de crear el comentario
+        // Esto indica que TÚ eres quien está comentando
+        this.shouldScrollToBottom = true;
+
+        // Crear el comentario
         await this.commentService.createComment(
           this.postId,
           this.currentUser.userId,
@@ -130,15 +204,14 @@ export class CommentSection implements OnInit, OnDestroy {
           this.newCommentText.trim()
         );
         
+        // Limpiar el input
         this.newCommentText = '';
         this.commentsCount++;
         
-        // Recargar comentarios
-        this.loadComments();
-        
-        console.log('✅ Comentario agregado');
+        console.log('✅ Comentario agregado - Se actualizará automáticamente y hará scroll');
       } catch (error) {
         console.error('❌ Error al agregar comentario:', error);
+        this.shouldScrollToBottom = false; // Resetear en caso de error
       }
     }
   }
@@ -149,7 +222,14 @@ export class CommentSection implements OnInit, OnDestroy {
   onReply(comment: CommentUI): void {
     console.log('Responder a:', comment.autorName);
     this.newCommentText = `@${comment.autorName} `;
-    // TODO: Implementar respuestas como comentarios hijos
+    
+    // Enfocar el input de comentario
+    setTimeout(() => {
+      const input = document.querySelector(`[data-post-id="${this.postId}"] .comment-input`) as HTMLInputElement;
+      if (input) {
+        input.focus();
+      }
+    }, 100);
   }
 
   /**
@@ -177,8 +257,11 @@ export class CommentSection implements OnInit, OnDestroy {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'Justo ahora';
+    if (diffMins === 1) return '1 min';
     if (diffMins < 60) return `${diffMins} min`;
+    if (diffHours === 1) return '1 h';
     if (diffHours < 24) return `${diffHours} h`;
+    if (diffDays === 1) return 'Ayer';
     if (diffDays < 7) return `${diffDays} d`;
     
     return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });

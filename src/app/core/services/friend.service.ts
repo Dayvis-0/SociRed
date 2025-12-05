@@ -13,7 +13,10 @@ import {
   orderBy,
   limit,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  onSnapshot,
+  QuerySnapshot,
+  DocumentData
 } from '@angular/fire/firestore';
 import { Observable, from, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
@@ -21,7 +24,7 @@ import { Suggestion, Friendship } from '../models/suggestion.model';
 import { User } from '../models/user.model';
 import { NotificationService } from './notification.service';
 import { AuthService } from './auth.service';
-import { UserStatsService } from './user-stats.service'; // ⬅️ NUEVO
+import { UserStatsService } from './user-stats.service';
 
 @Injectable({
   providedIn: 'root'
@@ -30,7 +33,7 @@ export class FriendService {
   private firestore = inject(Firestore);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
-  private userStatsService = inject(UserStatsService); // ⬅️ NUEVO
+  private userStatsService = inject(UserStatsService);
   
   private friendsCollection = collection(this.firestore, 'friends');
   private suggestionsCollection = collection(this.firestore, 'suggestions');
@@ -38,9 +41,6 @@ export class FriendService {
 
   // ==================== SUGERENCIAS ====================
   
-  /**
-   * Obtener sugerencias de amigos para un usuario
-   */
   getSuggestions(userId: string, limitCount: number = 10): Observable<Suggestion[]> {
     const q = query(
       this.suggestionsCollection,
@@ -67,9 +67,6 @@ export class FriendService {
     );
   }
 
-  /**
-   * Generar sugerencias aleatorias basadas en usuarios existentes
-   */
   async generateSuggestions(userId: string, limitCount: number = 3): Promise<Suggestion[]> {
     try {
       const usersQuery = query(this.usersCollection, limit(20));
@@ -111,9 +108,6 @@ export class FriendService {
 
   // ==================== SOLICITUDES DE AMISTAD ====================
   
-  /**
-   * Enviar solicitud de amistad
-   */
   async sendFriendRequest(fromUserId: string, toUserId: string): Promise<void> {
     try {
       const existingFriendship = await this.getFriendship(fromUserId, toUserId);
@@ -123,7 +117,6 @@ export class FriendService {
         return;
       }
 
-      // Obtener datos del usuario que envía la solicitud
       const fromUserDoc = await getDoc(doc(this.firestore, 'users', fromUserId));
       if (!fromUserDoc.exists()) {
         throw new Error('Usuario no encontrado');
@@ -131,7 +124,6 @@ export class FriendService {
       
       const fromUserData = fromUserDoc.data() as User;
 
-      // Crear nueva solicitud
       const friendshipData = {
         userId1: fromUserId,
         userId2: toUserId,
@@ -145,7 +137,6 @@ export class FriendService {
       const docRef = await addDoc(this.friendsCollection, friendshipData);
       await updateDoc(docRef, { friendshipId: docRef.id });
 
-      // Crear notificación
       await this.notificationService.createFriendRequestNotification(
         toUserId,
         fromUserId,
@@ -161,12 +152,8 @@ export class FriendService {
     }
   }
 
-  /**
-   * Aceptar solicitud de amistad
-   */
   async acceptFriendRequest(friendshipId: string): Promise<void> {
     try {
-      // Obtener información de la amistad
       const friendshipDoc = await getDoc(doc(this.firestore, 'friends', friendshipId));
       if (!friendshipDoc.exists()) {
         throw new Error('Solicitud no encontrada');
@@ -179,25 +166,21 @@ export class FriendService {
         throw new Error('Usuario no autenticado');
       }
 
-      // Actualizar estado
       const docRef = doc(this.firestore, 'friends', friendshipId);
       await updateDoc(docRef, {
         status: 'accepted',
         updatedAt: serverTimestamp()
       });
 
-      // ⬇️ INCREMENTAR CONTADOR DE AMIGOS PARA AMBOS USUARIOS ⬇️
       await this.userStatsService.incrementFriendsCount(
         friendshipData.userId1,
         friendshipData.userId2
       );
 
-      // Obtener datos del usuario que acepta
       const currentUserDoc = await getDoc(doc(this.firestore, 'users', currentUserId));
       if (currentUserDoc.exists()) {
         const currentUserData = currentUserDoc.data() as User;
 
-        // Crear notificación para el usuario que envió la solicitud
         await this.notificationService.createFriendAcceptedNotification(
           friendshipData.requestedBy,
           currentUserId,
@@ -206,7 +189,6 @@ export class FriendService {
         );
       }
 
-      // Eliminar la notificación de solicitud original
       await this.notificationService.deleteNotificationByFriendshipId(
         currentUserId,
         friendshipId
@@ -219,9 +201,6 @@ export class FriendService {
     }
   }
 
-  /**
-   * Rechazar solicitud de amistad
-   */
   async rejectFriendRequest(friendshipId: string): Promise<void> {
     try {
       const currentUserId = this.authService.getCurrentUserId();
@@ -230,11 +209,9 @@ export class FriendService {
         throw new Error('Usuario no autenticado');
       }
 
-      // Eliminar la solicitud
       const docRef = doc(this.firestore, 'friends', friendshipId);
       await deleteDoc(docRef);
 
-      // Eliminar la notificación
       await this.notificationService.deleteNotificationByFriendshipId(
         currentUserId,
         friendshipId
@@ -247,18 +224,13 @@ export class FriendService {
     }
   }
 
-  /**
-   * Eliminar amistad
-   */
   async removeFriend(friendshipId: string): Promise<void> {
     try {
-      // ⬇️ OBTENER DATOS ANTES DE ELIMINAR ⬇️
       const friendshipDoc = await getDoc(doc(this.firestore, 'friends', friendshipId));
       
       if (friendshipDoc.exists()) {
         const friendshipData = friendshipDoc.data() as Friendship;
         
-        // Solo decrementar si la amistad estaba aceptada
         if (friendshipData.status === 'accepted') {
           await this.userStatsService.decrementFriendsCount(
             friendshipData.userId1,
@@ -267,7 +239,6 @@ export class FriendService {
         }
       }
 
-      // Eliminar el documento
       const docRef = doc(this.firestore, 'friends', friendshipId);
       await deleteDoc(docRef);
 
@@ -280,9 +251,6 @@ export class FriendService {
 
   // ==================== CONSULTAS ====================
   
-  /**
-   * Verificar si dos usuarios son amigos
-   */
   async areFriends(userId1: string, userId2: string): Promise<boolean> {
     try {
       const q1 = query(
@@ -311,9 +279,6 @@ export class FriendService {
     }
   }
 
-  /**
-   * Obtener relación de amistad entre dos usuarios
-   */
   async getFriendship(userId1: string, userId2: string): Promise<Friendship | null> {
     try {
       const q1 = query(
@@ -353,51 +318,108 @@ export class FriendService {
   }
 
   /**
-   * Obtener lista de amigos de un usuario
+   * 🔥 OBTENER AMIGOS EN TIEMPO REAL (CON LISTENER)
    */
   getFriends(userId: string): Observable<User[]> {
-    const q1 = query(
-      this.friendsCollection,
-      where('userId1', '==', userId),
-      where('status', '==', 'accepted')
-    );
+    return new Observable(observer => {
+      const q1 = query(
+        this.friendsCollection,
+        where('userId1', '==', userId),
+        where('status', '==', 'accepted')
+      );
 
-    const q2 = query(
-      this.friendsCollection,
-      where('userId2', '==', userId),
-      where('status', '==', 'accepted')
-    );
+      const q2 = query(
+        this.friendsCollection,
+        where('userId2', '==', userId),
+        where('status', '==', 'accepted')
+      );
 
-    return from(Promise.all([getDocs(q1), getDocs(q2)])).pipe(
-      map(async ([snapshot1, snapshot2]) => {
-        const friendIds: string[] = [];
-        
+      let friendIds: string[] = [];
+      let unsubscribers: (() => void)[] = [];
+
+      // 🔥 Listener para friendships donde el usuario es userId1
+      const unsubscribe1 = onSnapshot(q1, async (snapshot1: QuerySnapshot<DocumentData>) => {
+        const ids1: string[] = [];
         snapshot1.docs.forEach(doc => {
           const data = doc.data();
-          friendIds.push(data['userId2']);
+          ids1.push(data['userId2']);
         });
+
+        // Combinar con los IDs del otro query
+        friendIds = [...new Set([...ids1, ...friendIds])];
         
+        await this.loadFriendsData(friendIds, observer);
+      });
+
+      // 🔥 Listener para friendships donde el usuario es userId2
+      const unsubscribe2 = onSnapshot(q2, async (snapshot2: QuerySnapshot<DocumentData>) => {
+        const ids2: string[] = [];
         snapshot2.docs.forEach(doc => {
           const data = doc.data();
-          friendIds.push(data['userId1']);
+          ids2.push(data['userId1']);
         });
 
-        const friends: User[] = [];
-        for (const friendId of friendIds) {
-          const userDoc = await getDoc(doc(this.firestore, 'users', friendId));
-          if (userDoc.exists()) {
-            friends.push(userDoc.data() as User);
-          }
-        }
+        // Combinar con los IDs del otro query
+        friendIds = [...new Set([...friendIds, ...ids2])];
+        
+        await this.loadFriendsData(friendIds, observer);
+      });
 
-        return friends;
-      }),
-      switchMap(promise => from(promise)),
-      catchError(error => {
-        console.error('❌ Error al obtener amigos:', error);
-        return of([]);
-      })
-    );
+      unsubscribers = [unsubscribe1, unsubscribe2];
+
+      // 🔥 Listeners para detectar cambios en el estado online de cada amigo
+      const setupUserListeners = (friendIds: string[]) => {
+        // Limpiar listeners anteriores
+        unsubscribers.slice(2).forEach(unsub => unsub());
+        unsubscribers = unsubscribers.slice(0, 2);
+
+        // Crear nuevo listener para cada amigo
+        friendIds.forEach(friendId => {
+          const userDoc = doc(this.firestore, 'users', friendId);
+          const unsubUser = onSnapshot(userDoc, async () => {
+            // Cuando cambia el estado de un usuario, recargar todos
+            await this.loadFriendsData(friendIds, observer);
+          });
+          unsubscribers.push(unsubUser);
+        });
+      };
+
+      // Configurar listeners de usuarios después de obtener friendIds
+      setTimeout(() => setupUserListeners(friendIds), 500);
+
+      // Cleanup: desuscribirse cuando el Observable se cancele
+      return () => {
+        console.log('🛑 Desuscrito de amigos en tiempo real');
+        unsubscribers.forEach(unsub => unsub());
+      };
+    });
+  }
+
+  /**
+   * 🔥 Cargar datos de amigos y emitir al observer
+   */
+  private async loadFriendsData(friendIds: string[], observer: any): Promise<void> {
+    try {
+      const friends: User[] = [];
+      
+      for (const friendId of friendIds) {
+        const userDoc = await getDoc(doc(this.firestore, 'users', friendId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data() as User;
+          friends.push({
+            ...userData,
+            isOnline: userData.isOnline || false,
+            lastSeen: userData.lastSeen
+          });
+        }
+      }
+
+      console.log('🔄 Amigos actualizados en tiempo real:', friends.length);
+      observer.next(friends);
+    } catch (error) {
+      console.error('❌ Error al cargar datos de amigos:', error);
+      observer.error(error);
+    }
   }
 
   // ==================== HELPERS ====================
